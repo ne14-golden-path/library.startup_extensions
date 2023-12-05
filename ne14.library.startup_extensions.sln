@@ -1,0 +1,47 @@
+﻿
+Microsoft Visual Studio Solution File, Format Version 12.00
+# Visual Studio Version 17
+VisualStudioVersion = 17.8.34322.80
+MinimumVisualStudioVersion = 10.0.40219.1
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "ne14.library.startup_extensions", "ne14.library.startup_extensions\ne14.library.startup_extensions.csproj", "{5562471D-8DB1-4FD3-A014-666898E2BBFC}"
+EndProject
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Files", "Files", "{29D77929-58F5-48A9-A36E-25DD71A6E561}"
+	ProjectSection(SolutionItems) = preProject
+		README.md = README.md
+		stryker-config.json = stryker-config.json
+	EndProjectSection
+EndProject
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Pipelines", "Pipelines", "{F04FB577-BEA1-47D7-99B2-D397B0D57886}"
+	ProjectSection(SolutionItems) = preProject
+		.github\workflows\release.yml = .github\workflows\release.yml
+		.github\workflows\tag.yml = .github\workflows\tag.yml
+		.github\workflows\test.yml = .github\workflows\test.yml
+	EndProjectSection
+EndProject
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "ne14.library.startup_extensions.tests", "ne14.library.startup_extensions.tests\ne14.library.startup_extensions.tests.csproj", "{A58103A4-866C-4A9D-9F85-EC5F48A9DCEF}"
+EndProject
+Global
+	GlobalSection(SolutionConfigurationPlatforms) = preSolution
+		Debug|Any CPU = Debug|Any CPU
+		Release|Any CPU = Release|Any CPU
+	EndGlobalSection
+	GlobalSection(ProjectConfigurationPlatforms) = postSolution
+		{5562471D-8DB1-4FD3-A014-666898E2BBFC}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{5562471D-8DB1-4FD3-A014-666898E2BBFC}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{5562471D-8DB1-4FD3-A014-666898E2BBFC}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{5562471D-8DB1-4FD3-A014-666898E2BBFC}.Release|Any CPU.Build.0 = Release|Any CPU
+		{A58103A4-866C-4A9D-9F85-EC5F48A9DCEF}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{A58103A4-866C-4A9D-9F85-EC5F48A9DCEF}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{A58103A4-866C-4A9D-9F85-EC5F48A9DCEF}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{A58103A4-866C-4A9D-9F85-EC5F48A9DCEF}.Release|Any CPU.Build.0 = Release|Any CPU
+	EndGlobalSection
+	GlobalSection(SolutionProperties) = preSolution
+		HideSolutionNode = FALSE
+	EndGlobalSection
+	GlobalSection(NestedProjects) = preSolution
+		{F04FB577-BEA1-47D7-99B2-D397B0D57886} = {29D77929-58F5-48A9-A36E-25DD71A6E561}
+	EndGlobalSection
+	GlobalSection(ExtensibilityGlobals) = postSolution
+		SolutionGuid = {FFAA1273-02FE-4041-8C3A-3DC4E65C360A}
+	EndGlobalSection
+EndGlobal

@@ -1,0 +1,12 @@
+{
+  "profiles": {
+    "ne14.library.startup_extensions": {
+      "commandName": "Project",
+      "launchBrowser": true,
+      "environmentVariables": {
+        "ASPNETCORE_ENVIRONMENT": "Development"
+      },
+      "applicationUrl": "https://localhost:51078;http://localhost:51079"
+    }
+  }
+}

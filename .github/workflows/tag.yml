@@ -1,0 +1,30 @@
+name: tag
+on:
+  push:
+    branches:
+    - main
+  workflow_dispatch: # todo: remove this demo trigger!
+jobs:
+  tag:
+    runs-on: ubuntu-latest
+    steps:
+    - name: Install xmllint
+      run: sudo apt install libxml2-utils
+    - uses: actions/checkout@v3
+      with:
+        ssh-key: "${{ secrets.COMMIT_KEY }}"
+    - name: Set the version
+      run: |
+        shopt -s extglob
+        for file in ./**/!(*Test*(s)|*UnitTest*(s)).csproj; do
+          prefix="$(echo "cat /Project/PropertyGroup/VersionPrefix/text()" | xmllint --nocdata --shell "$file" | sed '1d;$d')"
+          if [[ $prefix ]]; then
+            break
+          fi
+        done
+        suffix="${{ format('pre.{0}', github.run_number) }}"
+        echo "VERSION=v${prefix:-1.0.0}-$suffix" >> $GITHUB_ENV
+    - name: Create tag
+      run: |
+        git tag ${{ env.VERSION }}
+        git push origin ${{ env.VERSION }}

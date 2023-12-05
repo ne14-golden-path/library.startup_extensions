@@ -1,0 +1,52 @@
+name: test
+on:
+  pull_request:
+  workflow_call:
+jobs:
+  run_tests:
+    runs-on: ubuntu-latest
+    steps:
+    - uses: actions/checkout@v3
+    - uses: actions/setup-dotnet@v2
+      with:
+        dotnet-version: 8.0.x
+    - name: Add local packages source
+      env:
+        READ_REPO_PACKAGES: ${{ secrets.READ_REPO_PACKAGES }}
+      run: dotnet nuget add source --name ne14-gp --username ne14-gp --password "${{ env.READ_REPO_PACKAGES }}" --store-password-in-clear-text "https://nuget.pkg.github.com/ne14-golden-path/index.json"
+    - name: Restore tools
+      run: dotnet tool restore
+    - name: Build for release
+      run: dotnet build -c Release
+    - name: Generate raw coverage data
+      run: dotnet test -c Release -s .runsettings; dotnet reportgenerator -targetdir:coveragereport -reports:**/coverage.cobertura.xml -reporttypes:"html;jsonsummary"
+    - name: Get coverage json
+      id: getjson
+      run: echo COVERAGE_JSON=$(tr '\r\n' ' ' <coveragereport/Summary.json) >> $GITHUB_ENV
+    - name: Check coverage values
+      id: check_coverage
+      run: |
+        line=${{ fromJson(env.COVERAGE_JSON).summary.linecoverage }}
+        branch=${{ fromJson(env.COVERAGE_JSON).summary.branchcoverage }}
+        method=${{ fromJson(env.COVERAGE_JSON).summary.methodcoverage }}
+        [ "$line" == 100 ] && ([ "$branch" == "" ] || [ "$branch" == 100 ]) && [ "$method" == 100 ] && exit 0
+        exit 1
+    - name: Process coverage report
+      if: success() || steps.check_coverage.outcome == 'failure'
+      run: |
+        dotnet reportgenerator -targetdir:'${{ github.workspace }}/drop/reports' -reports:**/coverage.cobertura.xml -reporttypes:"htmlsummary"
+        rm -f ${{ github.workspace }}/drop/reports/summary.htm
+        mv ${{ github.workspace }}/drop/reports/summary.html ${{ github.workspace }}/drop/reports/coverage-report.html
+    - name: Get mutation data
+      id: gen_mutation
+      if: success() || steps.check_coverage.outcome == 'failure'
+      run: dotnet stryker -O ${{ github.workspace }}/drop
+    - name: Drop artifact - reports
+      if: success() || steps.check_coverage.outcome == 'failure' || steps.gen_mutation.outcome == 'failure'
+      uses: actions/upload-artifact@v3
+      with:
+        name: reports
+        path: ${{ github.workspace }}/drop/reports
+    - name: Fail build warnings
+      run: dotnet build -c Release --no-incremental /warnaserror
+
