@@ -19,7 +19,7 @@ using ne14.library.fluent_errors.Extensions;
 /// </remarks>
 /// <param name="next">The request delegate.</param>
 /// <param name="logger">The logger.</param>
-internal class FluentErrorsMiddleware(
+public class FluentErrorsMiddleware(
     RequestDelegate next,
     ILogger<FluentErrorsMiddleware> logger)
 {
