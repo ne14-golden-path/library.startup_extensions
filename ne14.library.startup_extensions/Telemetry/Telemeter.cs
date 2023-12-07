@@ -14,22 +14,20 @@ using System.Reflection;
 /// <inheritdoc cref="ITelemeter"/>
 public sealed class Telemeter : ITelemeter, IDisposable
 {
-    private readonly Meter appMeter;
-    private readonly ActivitySource appSource;
-    private readonly ActivityTagsCollection tags;
-
     /// <summary>
     /// Initializes a new instance of the <see cref="Telemeter"/> class.
     /// </summary>
-    public Telemeter()
+    /// <param name="assemblyName">The caller assembly name. This is exposed
+    /// mainly for testing purposes.</param>
+    public Telemeter(AssemblyName? assemblyName = null)
     {
-        var callingAssembly = Assembly.GetCallingAssembly().GetName();
-        this.Name = callingAssembly.Name!;
-        var appVersion = callingAssembly.Version?.ToString();
+        assemblyName ??= Assembly.GetCallingAssembly().GetName();
+        var appName = assemblyName.Name!;
+        var appVersion = assemblyName.Version?.ToString(3);
 
-        this.appMeter = new Meter(this.Name, appVersion);
-        this.appSource = new ActivitySource(this.Name, appVersion);
-        this.tags = new()
+        this.AppMeter = new Meter(appName, appVersion);
+        this.AppTracer = new ActivitySource(appName, appVersion);
+        this.AppTags = new()
         {
             ["namespace"] = Environment.GetEnvironmentVariable("K8S_NAMESPACE"),
             ["app"] = Environment.GetEnvironmentVariable("K8S_APP"),
@@ -38,34 +36,42 @@ public sealed class Telemeter : ITelemeter, IDisposable
     }
 
     /// <inheritdoc/>
-    public string Name { get; }
+    public Meter AppMeter { get; }
 
     /// <inheritdoc/>
-    public void CaptureMetric<T>(
+    public ActivitySource AppTracer { get; }
+
+    /// <inheritdoc/>
+    public ActivityTagsCollection AppTags { get; }
+
+    /// <inheritdoc/>
+    public Instrument<T> CaptureMetric<T>(
         MetricType metricType,
         T value,
         string name,
         string? unit = null,
         string? description = null,
-        IEnumerable<KeyValuePair<string, object?>>? tags = null)
+        params KeyValuePair<string, object?>[] tags)
         where T : struct
     {
-        tags = this.tags.Concat(tags ?? []);
+        var allTags = this.AppTags.Concat(tags).ToArray();
 
         switch (metricType)
         {
             case MetricType.Counter:
-                var upCounter = this.appMeter.CreateCounter<T>(name, unit, description);
-                upCounter.Add(value, tags.ToArray());
-                break;
+                var upCounter = this.AppMeter.CreateCounter<T>(name, unit, description);
+                upCounter.Add(value, allTags);
+                return upCounter;
             case MetricType.CounterNegatable:
-                var upDownCounter = this.appMeter.CreateUpDownCounter<T>(name, unit, description);
-                upDownCounter.Add(value, tags.ToArray());
-                break;
+                var upDownCounter = this.AppMeter.CreateUpDownCounter<T>(name, unit, description);
+                upDownCounter.Add(value, allTags);
+                return upDownCounter;
             case MetricType.Histogram:
-                var histo = this.appMeter.CreateHistogram<T>(name, unit, description);
-                histo.Record(value, tags.ToArray());
-                break;
+                var histo = this.AppMeter.CreateHistogram<T>(name, unit, description);
+                histo.Record(value, allTags);
+                return histo;
+            default:
+                throw new ArgumentException($"Unrecognised metric type: {metricType}", nameof(metricType));
         }
     }
 
@@ -73,17 +79,17 @@ public sealed class Telemeter : ITelemeter, IDisposable
     public Activity? StartTrace(
         string name,
         ActivityKind kind = ActivityKind.Internal,
-        IEnumerable<KeyValuePair<string, object?>>? tags = null)
+        params KeyValuePair<string, object?>[] tags)
     {
-        tags = this.tags.Concat(tags ?? []);
-        return this.appSource.StartActivity(name, kind, null, tags);
+        var allTags = this.AppTags.Concat(tags);
+        return this.AppTracer.StartActivity(name, kind, null, allTags);
     }
 
     /// <inheritdoc/>
     public void Dispose()
     {
         GC.SuppressFinalize(this);
-        this.appMeter?.Dispose();
-        this.appSource?.Dispose();
+        this.AppMeter.Dispose();
+        this.AppTracer.Dispose();
     }
 }

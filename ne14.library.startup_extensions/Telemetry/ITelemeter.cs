@@ -6,6 +6,7 @@ namespace ne14.library.startup_extensions.Telemetry;
 
 using System.Collections.Generic;
 using System.Diagnostics;
+using System.Diagnostics.Metrics;
 
 /// <summary>
 /// Telemetry services.
@@ -13,9 +14,19 @@ using System.Diagnostics;
 public interface ITelemeter
 {
     /// <summary>
-    /// Gets the name under which the telemeter can be registered.
+    /// Gets the meter with which the telemeter was registered.
     /// </summary>
-    public string Name { get; }
+    public Meter AppMeter { get; }
+
+    /// <summary>
+    /// Gets the activity source with which the telemeter was registered.
+    /// </summary>
+    public ActivitySource AppTracer { get; }
+
+    /// <summary>
+    /// Gets the base set of telemetry tags.
+    /// </summary>
+    public ActivityTagsCollection AppTags { get; }
 
     /// <summary>
     /// Captures a metric in the form of a histogram.
@@ -27,13 +38,14 @@ public interface ITelemeter
     /// <param name="unit">The unit of measure.</param>
     /// <param name="description">The metric description.</param>
     /// <param name="tags">Any tags to include.</param>
-    public void CaptureMetric<T>(
+    /// <returns>The instrument.</returns>
+    public Instrument<T> CaptureMetric<T>(
         MetricType metricType,
         T value,
         string name,
         string? unit = null,
         string? description = null,
-        IEnumerable<KeyValuePair<string, object?>>? tags = null)
+        params KeyValuePair<string, object?>[] tags)
         where T : struct;
 
     /// <summary>
@@ -47,5 +59,5 @@ public interface ITelemeter
     public Activity? StartTrace(
         string name,
         ActivityKind kind = ActivityKind.Internal,
-        IEnumerable<KeyValuePair<string, object?>>? tags = null);
+        params KeyValuePair<string, object?>[] tags);
 }

@@ -9,38 +9,48 @@ using System.Diagnostics;
 using System.Reflection;
 using System.Threading.Tasks;
 using MethodBoundaryAspect.Fody.Attributes;
+using ne14.library.fluent_errors.Extensions;
 
 /// <summary>
 /// Attribute that automatically captures basic trace data.
 /// </summary>
+/// <remarks>
+/// Initializes a new instance of the <see cref="TraceThisAttribute"/> class.
+/// </remarks>
+/// <param name="telemeter">Optional telemeter instance.</param>
 [AttributeUsage(AttributeTargets.All)]
-public sealed class TraceThisAttribute : OnMethodBoundaryAspect, IDisposable
+public sealed class TraceThisAttribute(ITelemeter? telemeter = null) : OnMethodBoundaryAspect, IDisposable
 {
-    private readonly ITelemeter telemeter;
-    private Activity? activity;
+    /// <summary>
+    /// Gets a value indicating whether the object has been disposed.
+    /// </summary>
+    public bool? IsDisposed { get; private set; }
 
     /// <summary>
-    /// Initializes a new instance of the <see cref="TraceThisAttribute"/> class.
+    /// Gets the telemeter instance.
     /// </summary>
-    public TraceThisAttribute()
-    {
-        this.telemeter = new Telemeter();
-    }
+    public ITelemeter Telemeter { get; } = telemeter ?? new Telemeter();
+
+    /// <summary>
+    /// Gets the activity.
+    /// </summary>
+    public Activity? Activity { get; private set; }
 
     /// <inheritdoc/>
     public override void OnEntry(MethodExecutionArgs arg)
     {
         var method = arg?.Method ?? throw new ArgumentNullException(nameof(arg));
         var activityName = GetActivityName(method);
-        this.activity = this.telemeter.StartTrace(activityName);
-
-        Debug.WriteLine($"Activity on {this.telemeter.Name}; {activityName}");
+        this.Activity = this.Telemeter.StartTrace(activityName);
+        this.IsDisposed = false;
+        Debug.WriteLine($"Activity on {this.Telemeter.AppTracer.Name}; {activityName}");
     }
 
     /// <inheritdoc/>
     public override void OnExit(MethodExecutionArgs arg)
     {
-        if (arg?.ReturnValue is Task task)
+        arg.MustExist();
+        if (arg.ReturnValue is Task task)
         {
             task.ContinueWith(_ => this.Dispose(), TaskScheduler.Default);
         }
@@ -66,21 +76,21 @@ public sealed class TraceThisAttribute : OnMethodBoundaryAspect, IDisposable
             tags.Add("innerMessage", ex.InnerException.Message);
         }
 
-        this.activity?.AddEvent(new("exception", tags: tags));
+        this.Activity?.AddEvent(new("exception", tags: tags));
         this.Dispose();
     }
 
     /// <inheritdoc/>
     public void Dispose()
     {
-        this.activity?.Stop();
-        this.activity?.Dispose();
+        this.IsDisposed = true;
+        this.Activity?.Dispose();
     }
 
     private static string GetActivityName(MethodBase method)
     {
         var declaringAssembly = Assembly.GetAssembly(method.DeclaringType!);
-        var prefix = declaringAssembly?.GetName()?.Name;
-        return $"[{prefix}] {method.DeclaringType?.Name}::{method.Name}()";
+        var prefix = declaringAssembly!.GetName().Name;
+        return $"[{prefix}] {method.DeclaringType!.Name}::{method.Name}()";
     }
 }
