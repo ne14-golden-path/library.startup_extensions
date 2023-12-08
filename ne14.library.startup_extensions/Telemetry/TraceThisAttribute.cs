@@ -43,7 +43,7 @@ public sealed class TraceThisAttribute(ITelemeter? telemeter = null) : OnMethodB
         var activityName = GetActivityName(method);
         this.Activity = this.Telemeter.StartTrace(activityName);
         this.IsDisposed = false;
-        Debug.WriteLine($"Activity on {this.Telemeter.AppTracer.Name}; {activityName}");
+        Trace.WriteLine($"Activity on {this.Telemeter.AppTracer.Name}; {activityName}");
     }
 
     /// <inheritdoc/>

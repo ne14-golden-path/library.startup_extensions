@@ -4,6 +4,7 @@
 
 namespace ne14.library.startup_extensions.Telemetry;
 
+using System;
 using System.Collections.Generic;
 using System.Diagnostics;
 using System.Diagnostics.Metrics;
@@ -37,6 +38,7 @@ public interface ITelemeter
     /// <param name="name">The metric name.</param>
     /// <param name="unit">The unit of measure.</param>
     /// <param name="description">The metric description.</param>
+    /// <param name="onCreate">On instrument created.</param>
     /// <param name="tags">Any tags to include.</param>
     /// <returns>The instrument.</returns>
     public Instrument<T> CaptureMetric<T>(
@@ -45,6 +47,7 @@ public interface ITelemeter
         string name,
         string? unit = null,
         string? description = null,
+        Action<Instrument>? onCreate = null,
         params KeyValuePair<string, object?>[] tags)
         where T : struct;
 

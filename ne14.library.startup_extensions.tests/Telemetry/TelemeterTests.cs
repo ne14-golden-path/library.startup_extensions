@@ -5,7 +5,9 @@
 namespace ne14.library.startup_extensions.tests.Telemetry;
 
 using System.Diagnostics;
+using System.Diagnostics.Metrics;
 using System.Reflection;
+using ne14.library.fluent_errors.Extensions;
 using ne14.library.startup_extensions.Telemetry;
 
 /// <summary>
@@ -43,6 +45,9 @@ public class TelemeterTests
             ["app"] = "test app",
             ["pod"] = "test pod",
         };
+        Environment.SetEnvironmentVariable("K8S_NAMESPACE", $"{expected["namespace"]}");
+        Environment.SetEnvironmentVariable("K8S_APP", $"{expected["app"]}");
+        Environment.SetEnvironmentVariable("K8S_POD", $"{expected["pod"]}");
 
         // Act
         using var sut = new Telemeter();
@@ -91,12 +96,27 @@ public class TelemeterTests
         using var sut = new Telemeter();
         var tag = new KeyValuePair<string, object?>("foo", "bar");
         const string metricName = "foobar";
+        const int testValue = 42;
+        using var listener = GetListener();
+        using var meterListener = new MeterListener();
+        void OnCreate(Instrument i) => meterListener.EnableMeasurementEvents(i, i.Name);
+        var handled = false;
+        meterListener.SetMeasurementEventCallback<int>((instr, val, tags, name) =>
+        {
+            handled = true;
+            name.Should().Be(metricName);
+            val.Should().Be(testValue);
+            tags.ToArray().Should().ContainEquivalentOf(tag);
+            instr.Name.Should().Be(metricName);
+        });
+        meterListener.Start();
 
         // Act
-        var instrument = sut.CaptureMetric(metricType, 0, metricName, tags: tag);
+        var instrument = sut.CaptureMetric(metricType, 42, metricName, onCreate: OnCreate, tags: tag);
 
         // Assert
         instrument.Name.Should().Be(metricName);
+        handled.MustBe(true);
     }
 
     private static ActivityListener GetListener()

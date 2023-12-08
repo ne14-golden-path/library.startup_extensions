@@ -51,6 +51,7 @@ public sealed class Telemeter : ITelemeter, IDisposable
         string name,
         string? unit = null,
         string? description = null,
+        Action<Instrument>? onCreate = null,
         params KeyValuePair<string, object?>[] tags)
         where T : struct
     {
@@ -60,14 +61,17 @@ public sealed class Telemeter : ITelemeter, IDisposable
         {
             case MetricType.Counter:
                 var upCounter = this.AppMeter.CreateCounter<T>(name, unit, description);
+                onCreate?.Invoke(upCounter);
                 upCounter.Add(value, allTags);
                 return upCounter;
             case MetricType.CounterNegatable:
                 var upDownCounter = this.AppMeter.CreateUpDownCounter<T>(name, unit, description);
+                onCreate?.Invoke(upDownCounter);
                 upDownCounter.Add(value, allTags);
                 return upDownCounter;
             case MetricType.Histogram:
                 var histo = this.AppMeter.CreateHistogram<T>(name, unit, description);
+                onCreate?.Invoke(histo);
                 histo.Record(value, allTags);
                 return histo;
             default:

@@ -1,12 +1,5 @@
 <?xml version="1.0" encoding="utf-8" ?>
 <RunSettings>
-  <RunConfiguration>
-    <EnvironmentVariables>
-      <K8S_NAMESPACE>test namespace</K8S_NAMESPACE>
-      <K8S_APP>test app</K8S_APP>
-	  <K8S_POD>test pod</K8S_POD>
-    </EnvironmentVariables>
-  </RunConfiguration>
   <DataCollectionRunSettings>
     <DataCollectors>
       <DataCollector friendlyName="XPlat code coverage">

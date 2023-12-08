@@ -44,8 +44,7 @@ public class FluentErrorsMiddlewareTests
     public async Task InvokeAsync_RequestError_SetsStatus()
     {
         // Arrange
-        var expected = new ArithmeticException("oops");
-        var sut = GetSut(out var mockLogger, _ => throw expected);
+        var sut = GetSut(out _, _ => throw new ArithmeticException("oops"));
         var context = new DefaultHttpContext();
 
         // Act
@@ -53,6 +52,40 @@ public class FluentErrorsMiddlewareTests
 
         // Assert
         context.Response.StatusCode.Should().Be(500);
+    }
+
+    [Fact]
+    public async Task InvokeAsync_RequestError_LogsError()
+    {
+        // Arrange
+        var sut = GetSut(out var mockLogger, _ => throw new ArithmeticException("oops"));
+
+        // Act
+        await sut.InvokeAsync(new DefaultHttpContext());
+
+        // Assert
+        mockLogger.VerifyLog(
+            LogLevel.Error,
+            s => s == "Unhandled exception",
+            x => x.Message == "oops");
+    }
+
+    [Fact]
+    public async Task InvokeAsync_RequestError_WritesContent()
+    {
+        // Arrange
+        var sut = GetSut(out _, _ => throw new ArithmeticException("oops"));
+        var context = new DefaultHttpContext();
+        context.Response.Body = new MemoryStream();
+
+        // Act
+        await sut.InvokeAsync(context);
+
+        // Assert
+        context.Response.Body.Position = 0;
+        using var reader = new StreamReader(context.Response.Body);
+        var response = await reader.ReadToEndAsync();
+        response.Should().Contain(nameof(ArithmeticException));
     }
 
     private static FluentErrorsMiddleware GetSut(
