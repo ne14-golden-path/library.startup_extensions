@@ -206,7 +206,7 @@ public class TraceThisAttributeTests
                 It.IsAny<KeyValuePair<string, object?>[]>()))
             .Returns(activity);
 
-        return new(mockTelemeter.Object);
+        return new TraceThisAttribute { Telemeter = mockTelemeter.Object };
     }
 
     private static MethodExecutionArgs GetArgs(object? returnValue = null)

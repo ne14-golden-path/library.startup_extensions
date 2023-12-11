@@ -17,9 +17,8 @@ using ne14.library.fluent_errors.Extensions;
 /// <remarks>
 /// Initializes a new instance of the <see cref="TraceThisAttribute"/> class.
 /// </remarks>
-/// <param name="telemeter">Optional telemeter instance.</param>
 [AttributeUsage(AttributeTargets.All)]
-public sealed class TraceThisAttribute(ITelemeter? telemeter = null) : OnMethodBoundaryAspect, IDisposable
+public sealed class TraceThisAttribute() : OnMethodBoundaryAspect, IDisposable
 {
     /// <summary>
     /// Gets a value indicating whether the object has been disposed.
@@ -27,9 +26,9 @@ public sealed class TraceThisAttribute(ITelemeter? telemeter = null) : OnMethodB
     public bool? IsDisposed { get; private set; }
 
     /// <summary>
-    /// Gets the telemeter instance.
+    /// Gets or sets the telemeter instance.
     /// </summary>
-    public ITelemeter Telemeter { get; } = telemeter ?? new Telemeter();
+    public ITelemeter Telemeter { get; set; } = new Telemeter();
 
     /// <summary>
     /// Gets the activity.
