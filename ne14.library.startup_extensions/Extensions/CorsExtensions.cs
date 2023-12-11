@@ -24,7 +24,7 @@ public static class CorsExtensions
         string[]? origins = null,
         string[]? headers = null)
     {
-        headers = ["Authorization", "Content-Type", .. headers];
+        headers = ["Authorization", "Content-Type", .. headers ?? []];
         return services.AddCors(o => o
             .AddPolicy(nameof(startup_extensions), builder => builder
                 .WithMethods("GET", "POST", "PUT", "PATCH", "DELETE")
