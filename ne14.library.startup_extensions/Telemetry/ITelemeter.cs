@@ -30,7 +30,7 @@ public interface ITelemeter
     public ActivityTagsCollection AppTags { get; }
 
     /// <summary>
-    /// Captures a metric in the form of a histogram.
+    /// Captures a metric according to the specified type.
     /// </summary>
     /// <typeparam name="T">The value type.</typeparam>
     /// <param name="metricType">The metric type.</param>

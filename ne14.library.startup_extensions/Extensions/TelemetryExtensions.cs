@@ -20,7 +20,7 @@ using OpenTelemetry.Trace;
 public static class TelemetryExtensions
 {
     /// <summary>
-    /// Adds enterprise telemetry feature.
+    /// Adds the enterprise telemetry feature.
     /// </summary>
     /// <param name="services">The services.</param>
     /// <param name="configuration">The configuration.</param>
