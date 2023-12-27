@@ -44,35 +44,40 @@ public abstract class TracedMqConsumer<T> : RabbitMqConsumer<T>
     protected override async Task OnServiceStarting()
     {
         await Task.CompletedTask;
-        this.Logger.LogInformation("Consumer service starting: {Queue}", this.QueueName);
+        this.Logger.LogInformation("Mq consumer starting: {Queue}", this.QueueName);
     }
 
     /// <inheritdoc/>
     protected override async Task OnServiceStarted()
     {
         await Task.CompletedTask;
-        this.Logger.LogInformation("Consumer service started: {Queue}", this.QueueName);
+        this.Logger.LogInformation("Mq consumer started: {Queue}", this.QueueName);
     }
 
     /// <inheritdoc/>
     protected override async Task OnServiceStopping()
     {
         await Task.CompletedTask;
-        this.Logger.LogInformation("Consumer service stopping: {Queue}", this.QueueName);
+        this.Logger.LogInformation("Mq consumer stopping: {Queue}", this.QueueName);
     }
 
     /// <inheritdoc/>
     protected override async Task OnServiceStopped()
     {
         await Task.CompletedTask;
-        this.Logger.LogInformation("Consumer service stopped: {Queue}", this.QueueName);
+        this.Logger.LogInformation("Mq consumer stopped: {Queue}", this.QueueName);
     }
 
     /// <inheritdoc/>
     protected override async Task OnConsuming(object messageId, string json, int attempt)
     {
         await Task.CompletedTask;
-        this.Logger.LogInformation("Message received on: {Queue}", this.QueueName);
+        this.Logger.LogInformation(
+            "Mq message incoming: {Queue}#{MessageId} ({Attempt}x)",
+            this.QueueName,
+            messageId,
+            attempt);
+
         var tags = new Dictionary<string, object?>()
         {
             ["queue"] = this.QueueName,
@@ -87,7 +92,12 @@ public abstract class TracedMqConsumer<T> : RabbitMqConsumer<T>
     protected override async Task OnConsumeSuccess(object messageId, string json, int attempt)
     {
         await base.OnConsumeSuccess(messageId, json, attempt);
-        this.Logger.LogInformation("Message success on: {Queue}", this.QueueName);
+        this.Logger.LogInformation(
+            "Mq message success: {Queue}#{MessageId} ({Attempt}x)",
+            this.QueueName,
+            messageId,
+            attempt);
+
         var tags = new Dictionary<string, object?>()
         {
             ["queue"] = this.QueueName,
@@ -99,7 +109,13 @@ public abstract class TracedMqConsumer<T> : RabbitMqConsumer<T>
     protected override async Task OnConsumeFailure(object messageId, string json, int attempt, bool retry)
     {
         await base.OnConsumeFailure(messageId, json, attempt, retry);
-        this.Logger.LogError("Message failed on: {Queue}", this.QueueName);
+        this.Logger.LogError(
+            "Mq message failure ({FailMode}): {Queue}#{MessageId} ({Attempt}x)",
+            retry ? "temporary" : "permanent",
+            this.QueueName,
+            messageId,
+            attempt);
+
         var tags = new Dictionary<string, object?>()
         {
             ["outcome"] = retry ? "Retry" : "Abort",
