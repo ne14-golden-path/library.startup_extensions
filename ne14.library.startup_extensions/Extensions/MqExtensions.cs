@@ -44,4 +44,17 @@ public static class MqExtensions
     {
         return services.AddHostedService<T>();
     }
+
+    /// <summary>
+    /// Adds a mq producer.
+    /// </summary>
+    /// <param name="services">The service collection.</param>
+    /// <typeparam name="T">The producer type.</typeparam>
+    /// <returns>The original parameter, for chainable commands.</returns>
+    public static IServiceCollection AddMqProducer<T>(
+        this IServiceCollection services)
+        where T : ProducerBase
+    {
+        return services.AddSingleton<T>();
+    }
 }
