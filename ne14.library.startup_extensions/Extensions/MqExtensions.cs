@@ -6,7 +6,10 @@ namespace ne14.library.startup_extensions.Extensions;
 
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
-using ne14.library.rabbitmq;
+using ne14.library.rabbitmq.Consumer;
+using ne14.library.rabbitmq.Producer;
+using ne14.library.rabbitmq.Vendor;
+using RabbitMQ.Client;
 
 /// <summary>
 /// Extensions relating to message queue.
@@ -24,12 +27,17 @@ public static class MqExtensions
         IConfiguration configuration)
     {
         var mqSection = configuration.GetRequiredSection("RabbitMq");
+        var factory = new ConnectionFactory
+        {
+            UserName = mqSection["Username"],
+            Password = mqSection["Password"],
+            HostName = mqSection["Hostname"],
+            DispatchConsumersAsync = true,
+        };
 
-        var user = mqSection.GetValue<string>("Username");
-        var pass = mqSection.GetValue<string>("Password");
-        var host = mqSection.GetValue<string>("Hostname");
-
-        return services.AddSingleton(_ => new RabbitMqSession(user, pass, host));
+        return services
+            .AddSingleton<IConnectionFactory>(_ => factory)
+            .AddSingleton<IRabbitMqSession, RabbitMqSession>();
     }
 
     /// <summary>

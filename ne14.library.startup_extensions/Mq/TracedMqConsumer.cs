@@ -8,7 +8,9 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
 using Microsoft.Extensions.Logging;
-using ne14.library.rabbitmq;
+using ne14.library.fluent_errors.Extensions;
+using ne14.library.rabbitmq.Consumer;
+using ne14.library.rabbitmq.Vendor;
 using ne14.library.startup_extensions.Telemetry;
 
 /// <inheritdoc/>
@@ -69,34 +71,36 @@ public abstract class TracedMqConsumer<T> : RabbitMqConsumer<T>
     }
 
     /// <inheritdoc/>
-    protected override async Task OnConsuming(object messageId, string json, int attempt)
+    protected override async Task OnConsuming(string json, ConsumerContext context)
     {
         await Task.CompletedTask;
+        context.MustExist();
         this.Logger.LogInformation(
             "Mq message incoming: {Queue}#{MessageId} ({Attempt}x)",
             this.QueueName,
-            messageId,
-            attempt);
+            context.MessageId,
+            context.AttemptNumber);
 
         var tags = new Dictionary<string, object?>()
         {
             ["queue"] = this.QueueName,
-            ["messageId"] = messageId,
+            ["messageId"] = context.MessageId,
             ["json"] = json,
-            ["attempt"] = attempt,
+            ["attempt"] = context.AttemptNumber,
         };
         using var activity = this.Telemeter.StartTrace("mq-consume", tags: tags.ToArray());
     }
 
     /// <inheritdoc/>
-    protected override async Task OnConsumeSuccess(object messageId, string json, int attempt)
+    protected override async Task OnConsumeSuccess(string json, ConsumerContext context)
     {
-        await base.OnConsumeSuccess(messageId, json, attempt);
+        await base.OnConsumeSuccess(json, context);
+        context.MustExist();
         this.Logger.LogInformation(
             "Mq message success: {Queue}#{MessageId} ({Attempt}x)",
             this.QueueName,
-            messageId,
-            attempt);
+            context.MessageId,
+            context.AttemptNumber);
 
         var tags = new Dictionary<string, object?>()
         {
@@ -106,15 +110,16 @@ public abstract class TracedMqConsumer<T> : RabbitMqConsumer<T>
     }
 
     /// <inheritdoc/>
-    protected override async Task OnConsumeFailure(object messageId, string json, int attempt, bool retry)
+    protected override async Task OnConsumeFailure(string json, ConsumerContext context, bool retry)
     {
-        await base.OnConsumeFailure(messageId, json, attempt, retry);
+        await base.OnConsumeFailure(json, context, retry);
+        context.MustExist();
         this.Logger.LogError(
             "Mq message failure ({FailMode}): {Queue}#{MessageId} ({Attempt}x)",
             retry ? "temporary" : "permanent",
             this.QueueName,
-            messageId,
-            attempt);
+            context.MessageId,
+            context.AttemptNumber);
 
         var tags = new Dictionary<string, object?>()
         {

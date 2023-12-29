@@ -8,7 +8,7 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
 using Microsoft.Extensions.Logging;
-using ne14.library.rabbitmq;
+using ne14.library.rabbitmq.Vendor;
 using ne14.library.startup_extensions.Telemetry;
 
 /// <inheritdoc/>
