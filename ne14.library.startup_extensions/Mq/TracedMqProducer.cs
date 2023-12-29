@@ -21,7 +21,7 @@ public abstract class TracedMqProducer<T> : RabbitMqProducer<T>
     /// <param name="telemeter">The telemeter.</param>
     /// <param name="logger">The logger.</param>
     protected TracedMqProducer(
-        RabbitMqSession session,
+        IRabbitMqSession session,
         ITelemeter telemeter,
         ILogger<TracedMqProducer<T>> logger)
         : base(session)

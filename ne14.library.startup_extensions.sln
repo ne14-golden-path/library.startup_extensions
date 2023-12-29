@@ -20,8 +20,6 @@ Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Pipelines", "Pipelines", "{
 EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "ne14.library.startup_extensions.tests", "ne14.library.startup_extensions.tests\ne14.library.startup_extensions.tests.csproj", "{A58103A4-866C-4A9D-9F85-EC5F48A9DCEF}"
 EndProject
-Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "ne14.library.rabbitmq", "..\library.rabbitmq\ne14.library.rabbitmq\ne14.library.rabbitmq.csproj", "{10710FFD-74A9-452A-A5FB-2CFC2B4A55D1}"
-EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -36,10 +34,6 @@ Global
 		{A58103A4-866C-4A9D-9F85-EC5F48A9DCEF}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{A58103A4-866C-4A9D-9F85-EC5F48A9DCEF}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{A58103A4-866C-4A9D-9F85-EC5F48A9DCEF}.Release|Any CPU.Build.0 = Release|Any CPU
-		{10710FFD-74A9-452A-A5FB-2CFC2B4A55D1}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
-		{10710FFD-74A9-452A-A5FB-2CFC2B4A55D1}.Debug|Any CPU.Build.0 = Debug|Any CPU
-		{10710FFD-74A9-452A-A5FB-2CFC2B4A55D1}.Release|Any CPU.ActiveCfg = Release|Any CPU
-		{10710FFD-74A9-452A-A5FB-2CFC2B4A55D1}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE

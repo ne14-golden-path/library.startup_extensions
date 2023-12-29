@@ -23,7 +23,7 @@ public abstract class TracedMqConsumer<T> : RabbitMqConsumer<T>
     /// <param name="telemeter">The telemeter.</param>
     /// <param name="logger">The logger.</param>
     protected TracedMqConsumer(
-        RabbitMqSession session,
+        IRabbitMqSession session,
         ITelemeter telemeter,
         ILogger<TracedMqConsumer<T>> logger)
         : base(session)
