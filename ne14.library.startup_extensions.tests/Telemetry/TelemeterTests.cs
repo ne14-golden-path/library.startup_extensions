@@ -97,7 +97,6 @@ public class TelemeterTests
         var tag = new KeyValuePair<string, object?>("foo", "bar");
         const string metricName = "foobar";
         const int testValue = 42;
-        using var listener = GetListener();
         using var meterListener = new MeterListener();
         void OnCreate(Instrument i) => meterListener.EnableMeasurementEvents(i, i.Name);
         var handled = false;

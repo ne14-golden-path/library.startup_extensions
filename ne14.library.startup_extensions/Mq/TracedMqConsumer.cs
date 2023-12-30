@@ -116,7 +116,7 @@ public abstract class TracedMqConsumer<T> : RabbitMqConsumer<T>
         context.MustExist();
         this.Logger.LogError(
             "Mq message failure ({FailMode}): {Queue}#{MessageId} ({Attempt}x)",
-            retry ? "temporary" : "permanent",
+            retry ? "transient" : "permanent",
             this.QueueName,
             context.MessageId,
             context.AttemptNumber);
