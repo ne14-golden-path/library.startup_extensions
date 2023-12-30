@@ -39,4 +39,10 @@ public class BasicTracedConsumer(
             _ => Task.CompletedTask,
         };
     }
+
+    public async Task TestOnConsumeSuccess(string json, ConsumerContext context)
+        => await this.OnConsumeSuccess(json, context);
+
+    public async Task TestOnConsumeFailure(string json, ConsumerContext context,  bool retry)
+        => await this.OnConsumeFailure(json, context, retry);
 }

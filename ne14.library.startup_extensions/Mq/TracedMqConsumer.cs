@@ -95,8 +95,9 @@ public abstract class TracedMqConsumer<T> : RabbitMqConsumer<T>
     /// <inheritdoc/>
     protected override async Task OnConsumeSuccess(string json, ConsumerContext context)
     {
-        await base.OnConsumeSuccess(json, context);
         context.MustExist();
+        await base.OnConsumeSuccess(json, context);
+
         this.Logger.LogInformation(
             "Mq message success: {Queue}#{MessageId} ({Attempt}x)",
             this.QueueName,
@@ -113,8 +114,9 @@ public abstract class TracedMqConsumer<T> : RabbitMqConsumer<T>
     /// <inheritdoc/>
     protected override async Task OnConsumeFailure(string json, ConsumerContext context, bool retry)
     {
-        await base.OnConsumeFailure(json, context, retry);
         context.MustExist();
+        await base.OnConsumeFailure(json, context, retry);
+
         this.Logger.LogError(
             "Mq message failure ({FailMode}): {Queue}#{MessageId} ({Attempt}x)",
             retry ? "transient" : "permanent",
@@ -124,7 +126,7 @@ public abstract class TracedMqConsumer<T> : RabbitMqConsumer<T>
 
         var tags = new Dictionary<string, object?>()
         {
-            ["outcome"] = retry ? "Retry" : "Abort",
+            ["outcome"] = retry ? "retry" : "abort",
             ["queue"] = this.QueueName,
         };
         this.Telemeter.CaptureMetric(MetricType.Counter, 1, "mq-consume-failure", tags: tags.ToArray());
