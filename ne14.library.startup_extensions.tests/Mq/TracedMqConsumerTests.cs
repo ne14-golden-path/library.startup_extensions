@@ -251,7 +251,7 @@ public class TracedMqConsumerTests
             mocks.MockLogger.Object)!;
     }
 
-    private record BagOfMocks<T>(
+    private sealed record BagOfMocks<T>(
         Mock<IRabbitMqSession> MockSession,
         Mock<IModel> MockChannel,
         Mock<ITelemeter> MockTelemeter,
