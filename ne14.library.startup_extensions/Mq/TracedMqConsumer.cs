@@ -43,37 +43,36 @@ public abstract class TracedMqConsumer<T> : RabbitMqConsumer<T>
     protected ILogger<TracedMqConsumer<T>> Logger { get; }
 
     /// <inheritdoc/>
-    protected override async Task OnServiceStarting()
+    protected override Task OnServiceStarting()
     {
-        await Task.CompletedTask;
         this.Logger.LogInformation("Mq consumer starting: {Queue}", this.QueueName);
+        return Task.CompletedTask;
     }
 
     /// <inheritdoc/>
-    protected override async Task OnServiceStarted()
+    protected override Task OnServiceStarted()
     {
-        await Task.CompletedTask;
         this.Logger.LogInformation("Mq consumer started: {Queue}", this.QueueName);
+        return Task.CompletedTask;
     }
 
     /// <inheritdoc/>
-    protected override async Task OnServiceStopping()
+    protected override Task OnServiceStopping()
     {
-        await Task.CompletedTask;
         this.Logger.LogInformation("Mq consumer stopping: {Queue}", this.QueueName);
+        return Task.CompletedTask;
     }
 
     /// <inheritdoc/>
-    protected override async Task OnServiceStopped()
+    protected override Task OnServiceStopped()
     {
-        await Task.CompletedTask;
         this.Logger.LogInformation("Mq consumer stopped: {Queue}", this.QueueName);
+        return Task.CompletedTask;
     }
 
     /// <inheritdoc/>
-    protected override async Task OnConsuming(string json, ConsumerContext context)
+    protected override Task OnConsuming(string json, ConsumerContext context)
     {
-        await Task.CompletedTask;
         context.MustExist();
         this.Logger.LogInformation(
             "Mq message incoming: {Queue}#{MessageId} ({Attempt}x)",
@@ -88,7 +87,9 @@ public abstract class TracedMqConsumer<T> : RabbitMqConsumer<T>
             ["json"] = json,
             ["attempt"] = context.AttemptNumber,
         };
+
         using var activity = this.Telemeter.StartTrace("mq-consume", tags: tags.ToArray());
+        return Task.CompletedTask;
     }
 
     /// <inheritdoc/>

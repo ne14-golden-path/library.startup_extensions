@@ -41,16 +41,15 @@ public abstract class TracedMqProducer<T> : RabbitMqProducer<T>
     protected ILogger<TracedMqProducer<T>> Logger { get; }
 
     /// <inheritdoc/>
-    protected override async Task OnProducing(string message)
+    protected override Task OnProducing(string message)
     {
-        await Task.CompletedTask;
         this.Logger.LogInformation("Mq message sending: {Exchange}", this.ExchangeName);
+        return Task.CompletedTask;
     }
 
     /// <inheritdoc/>
-    protected override async Task OnProduced(string message)
+    protected override Task OnProduced(string message)
     {
-        await Task.CompletedTask;
         this.Logger.LogInformation("Mq message sent: {Exchange}", this.ExchangeName);
 
         var tags = new Dictionary<string, object?>()
@@ -58,7 +57,9 @@ public abstract class TracedMqProducer<T> : RabbitMqProducer<T>
             ["exchange"] = this.ExchangeName,
             ["json"] = message,
         };
+
         this.Telemeter.CaptureMetric(MetricType.Counter, 1, "mq-produce", tags: tags.ToArray());
         using var activity = this.Telemeter.StartTrace("mq-produce", tags: tags.ToArray());
+        return Task.CompletedTask;
     }
 }
