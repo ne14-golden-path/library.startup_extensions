@@ -2,7 +2,7 @@
 // Copyright (c) ne1410s. All rights reserved.
 // </copyright>
 
-namespace ne14.library.startup_extensions;
+namespace ne14.library.startup_extensions.Extensions;
 
 using System.Linq;
 using Microsoft.AspNetCore.Builder;
