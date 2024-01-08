@@ -48,7 +48,7 @@
   </ItemGroup>
 
   <ItemGroup>
-    <ProjectReference Include="..\..\library.rabbitmq\ne14.library.rabbitmq\ne14.library.rabbitmq.csproj" />
+    <ProjectReference Include="..\ne14.library.messaging\ne14.library.messaging.csproj" />
   </ItemGroup>
 
 </Project>

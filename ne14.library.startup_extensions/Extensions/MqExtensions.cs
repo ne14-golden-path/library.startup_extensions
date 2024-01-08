@@ -6,9 +6,8 @@ namespace ne14.library.startup_extensions.Extensions;
 
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
-using ne14.library.rabbitmq.Consumer;
-using ne14.library.rabbitmq.Producer;
-using ne14.library.rabbitmq.Vendor;
+using ne14.library.messaging.Abstractions.Consumer;
+using ne14.library.messaging.Abstractions.Producer;
 using RabbitMQ.Client;
 
 /// <summary>
@@ -35,9 +34,7 @@ public static class MqExtensions
             DispatchConsumersAsync = true,
         };
 
-        return services
-            .AddSingleton<IConnectionFactory>(_ => factory)
-            .AddSingleton<IRabbitMqSession, RabbitMqSession>();
+        return services.AddSingleton<IConnectionFactory>(_ => factory);
     }
 
     /// <summary>
@@ -48,7 +45,7 @@ public static class MqExtensions
     /// <returns>The original parameter, for chainable commands.</returns>
     public static IServiceCollection AddMqConsumer<T>(
         this IServiceCollection services)
-        where T : ConsumerBase
+        where T : MqConsumerBase
     {
         return services.AddHostedService<T>();
     }
@@ -61,7 +58,7 @@ public static class MqExtensions
     /// <returns>The original parameter, for chainable commands.</returns>
     public static IServiceCollection AddMqProducer<T>(
         this IServiceCollection services)
-        where T : ProducerBase
+        where T : MqProducerBase
     {
         return services.AddSingleton<T>();
     }
