@@ -38,31 +38,6 @@ public abstract class RabbitMqConsumer<T> : MqConsumerBase<T>, IDisposable
         this.connection = connectionFactory.CreateConnection();
         this.channel = this.connection.CreateModel();
         this.consumer = new(this.channel);
-
-        // Main handler queue
-        var mainQArgs = new Dictionary<string, object>
-        {
-            ["x-dead-letter-exchange"] = this.ExchangeName,
-            ["x-dead-letter-routing-key"] = Tier1Route,
-        };
-        this.channel.ExchangeDeclare(this.ExchangeName, ExchangeType.Direct, true);
-        this.channel.QueueDeclare(this.QueueName, true, false, false, mainQArgs);
-        this.channel.QueueBind(this.QueueName, this.ExchangeName, DefaultRoute);
-
-        // Tier 1 Failure: Retry
-        var tier1Queue = this.QueueName + "_" + Tier1Route;
-        var retryQArgs = new Dictionary<string, object>
-        {
-            ["x-dead-letter-exchange"] = this.ExchangeName,
-            ["x-dead-letter-routing-key"] = DefaultRoute,
-        };
-        this.channel.QueueDeclare(tier1Queue, true, false, false, retryQArgs);
-        this.channel.QueueBind(tier1Queue, this.ExchangeName, Tier1Route);
-
-        // Tier 2 Failure: Dead-letter
-        var tier2Queue = this.QueueName + "_" + Tier2Route;
-        this.channel.QueueDeclare(tier2Queue, true, false, false);
-        this.channel.QueueBind(tier2Queue, this.ExchangeName, Tier2Route);
     }
 
     /// <inheritdoc/>
@@ -79,6 +54,8 @@ public abstract class RabbitMqConsumer<T> : MqConsumerBase<T>, IDisposable
     {
         if (this.consumerTag == null)
         {
+            this.DeclareTopology();
+
             // Stryker disable once Assignment
             this.consumer.Received += this.OnConsumerReceipt;
             this.consumerTag = this.channel.BasicConsume(this.QueueName, false, this.consumer);
@@ -144,5 +121,33 @@ public abstract class RabbitMqConsumer<T> : MqConsumerBase<T>, IDisposable
             Message = Encoding.UTF8.GetString(bytes),
         };
         await this.ConsumeInternal(args.Body.ToArray(), consumerArgs);
+    }
+
+    private void DeclareTopology()
+    {
+        // Main handler queue
+        var mainQArgs = new Dictionary<string, object>
+        {
+            ["x-dead-letter-exchange"] = this.ExchangeName,
+            ["x-dead-letter-routing-key"] = Tier1Route,
+        };
+        this.channel.ExchangeDeclare(this.ExchangeName, ExchangeType.Direct, true);
+        this.channel.QueueDeclare(this.QueueName, true, false, false, mainQArgs);
+        this.channel.QueueBind(this.QueueName, this.ExchangeName, DefaultRoute);
+
+        // Tier 1 Failure: Retry
+        var tier1Queue = this.QueueName + "_" + Tier1Route;
+        var retryQArgs = new Dictionary<string, object>
+        {
+            ["x-dead-letter-exchange"] = this.ExchangeName,
+            ["x-dead-letter-routing-key"] = DefaultRoute,
+        };
+        this.channel.QueueDeclare(tier1Queue, true, false, false, retryQArgs);
+        this.channel.QueueBind(tier1Queue, this.ExchangeName, Tier1Route);
+
+        // Tier 2 Failure: Dead-letter
+        var tier2Queue = this.QueueName + "_" + Tier2Route;
+        this.channel.QueueDeclare(tier2Queue, true, false, false);
+        this.channel.QueueBind(tier2Queue, this.ExchangeName, Tier2Route);
     }
 }

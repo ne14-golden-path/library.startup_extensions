@@ -37,7 +37,11 @@ public abstract class MqTracingConsumer<T> : RabbitMqConsumer<T>
         this.logger = logger;
 
         config.MustExist();
+
+        // TODO: Fail if consumer app name is not populated
         this.ConsumerAppName = config["RabbitMq:ConsumerAppName"];
+
+        // TODO: Fix the nullability
         this.MaximumAttempts = this.GetConfig<long>(config, nameof(this.MaximumAttempts));
 
         this.Starting += this.OnStarting;
