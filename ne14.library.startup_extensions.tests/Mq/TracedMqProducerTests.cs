@@ -5,15 +5,15 @@
 namespace ne14.library.startup_extensions.tests.Mq;
 
 using System.Diagnostics;
+using System.Text.Json;
 using Microsoft.Extensions.Logging;
-using ne14.library.rabbitmq.Producer;
-using ne14.library.rabbitmq.Vendor;
+using ne14.library.messaging.Abstractions.Producer;
 using ne14.library.startup_extensions.Mq;
 using ne14.library.startup_extensions.Telemetry;
 using RabbitMQ.Client;
 
 /// <summary>
-/// Tests for the <see cref="TracedMqProducer{T}"/> class.
+/// Tests for the <see cref="MqTracingProducer{T}"/> class.
 /// </summary>
 public class TracedMqProducerTests
 {
@@ -32,66 +32,73 @@ public class TracedMqProducerTests
     }
 
     [Fact]
-    public async Task ProduceAsync_WhenCalled_TracesActivity()
+    public void ProduceAsync_WhenCalled_TracesActivity()
     {
         // Arrange
         var sut = GetSut<BasicTracedProducer>(out var mocks);
-        const string json = "{ \"Foo\": \"bar\" }";
+        var payload = new BasicPayload("bar", false);
         var tags = new KeyValuePair<string, object?>[]
         {
             new("exchange", sut.ExchangeName),
-            new("json", json),
+            new("json", ToJson(payload)),
         };
 
         // Act
-        await sut.ProduceAsync(json);
+        sut.Produce(payload);
 
         // Assert
         mocks.MockTelemeter.Verify(m => m.StartTrace("mq-produce", ActivityKind.Internal, tags));
     }
 
     [Fact]
-    public async Task ProduceAsync_WhenCalled_CapturesMetric()
+    public void ProduceAsync_WhenCalled_CapturesMetric()
     {
         // Arrange
         var sut = GetSut<BasicTracedProducer>(out var mocks);
-        const string json = "{ \"Foo\": \"bar\" }";
+        var payload = new BasicPayload("bar", null);
         var tags = new KeyValuePair<string, object?>[]
         {
             new("exchange", sut.ExchangeName),
-            new("json", json),
+            new("json", ToJson(payload)),
         };
 
         // Act
-        await sut.ProduceAsync(json);
+        sut.Produce(payload);
 
         // Assert
         mocks.MockTelemeter.Verify(
             m => m.CaptureMetric(MetricType.Counter, 1, "mq-produce", null, null, null, tags));
     }
 
+    private static string ToJson(object obj)
+        => JsonSerializer.Serialize(obj);
+
     private static T GetSut<T>(out BagOfMocks<T> mocks)
-        where T : ProducerBase
+        where T : MqProducerBase
     {
         mocks = new(
-            new Mock<IRabbitMqSession>(),
             new Mock<IModel>(),
             new Mock<ITelemeter>(),
             new Mock<ILogger<T>>());
 
-        mocks.MockSession
-            .Setup(m => m.Channel)
+        var mockConnection = new Mock<IConnection>();
+        mockConnection
+            .Setup(m => m.CreateModel())
             .Returns(mocks.MockChannel.Object);
+
+        var mockConnectionFactory = new Mock<IConnectionFactory>();
+        mockConnectionFactory
+            .Setup(m => m.CreateConnection())
+            .Returns(mockConnection.Object);
 
         return (T)Activator.CreateInstance(
             typeof(T),
-            mocks.MockSession.Object,
+            mocks.MockChannel.Object,
             mocks.MockTelemeter.Object,
             mocks.MockLogger.Object)!;
     }
 
     private sealed record BagOfMocks<T>(
-        Mock<IRabbitMqSession> MockSession,
         Mock<IModel> MockChannel,
         Mock<ITelemeter> MockTelemeter,
         Mock<ILogger<T>> MockLogger);

@@ -1,4 +1,4 @@
-﻿// <copyright file="MqEventArgs.cs" company="ne1410s">
+﻿// <copyright file="MqConsumerEventArgs.cs" company="ne1410s">
 // Copyright (c) ne1410s. All rights reserved.
 // </copyright>
 

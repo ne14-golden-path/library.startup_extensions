@@ -107,7 +107,7 @@ public abstract class MqConsumerBase<T> : MqConsumerBase, IMqConsumer<T>
     public event EventHandler<MqFailedEventArgs>? MessageFailed;
 
     /// <inheritdoc/>
-    public abstract Task Consume(T message, MqConsumerEventArgs args);
+    public abstract Task ConsumeAsync(T message, MqConsumerEventArgs args);
 
     /// <summary>
     /// Consumes raw message.
@@ -122,7 +122,7 @@ public abstract class MqConsumerBase<T> : MqConsumerBase, IMqConsumer<T>
         try
         {
             message = this.Parse(rawMessage);
-            await this.Consume(message, args);
+            await this.ConsumeAsync(message, args);
             this.MessageProcessed?.Invoke(this, args);
         }
         catch (Exception ex)

@@ -4,33 +4,34 @@
 
 namespace ne14.library.startup_extensions.tests.Mq;
 
+using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.Logging;
-using ne14.library.rabbitmq.Consumer;
-using ne14.library.rabbitmq.Exceptions;
-using ne14.library.rabbitmq.Vendor;
+using ne14.library.messaging.Abstractions.Consumer;
 using ne14.library.startup_extensions.Mq;
 using ne14.library.startup_extensions.Telemetry;
+using RabbitMQ.Client;
 
 public record BasicPayload(string Foo, bool? SimulateRetry);
 
 public class BasicTracedProducer(
-    IRabbitMqSession session,
+    IConnectionFactory connectionFactory,
     ITelemeter telemeter,
-    ILogger<TracedMqProducer<BasicPayload>> logger)
-        : TracedMqProducer<BasicPayload>(session, telemeter, logger)
+    ILogger<BasicTracedProducer> logger)
+        : MqTracingProducer<BasicPayload>(connectionFactory, telemeter, logger)
 {
     public override string ExchangeName => "basic-thing";
 }
 
 public class BasicTracedConsumer(
-    IRabbitMqSession session,
+    IConnectionFactory connectionFactory,
     ITelemeter telemeter,
-    ILogger<TracedMqConsumer<BasicPayload>> logger)
-        : TracedMqConsumer<BasicPayload>(session, telemeter, logger)
+    ILogger<BasicTracedConsumer> logger,
+    IConfiguration config)
+        : MqTracingConsumer<BasicPayload>(connectionFactory, telemeter, logger, config)
 {
     public override string ExchangeName => "basic-thing";
 
-    public override Task Consume(BasicPayload message, ConsumerContext context)
+    public override Task ConsumeAsync(BasicPayload message, MqConsumerEventArgs args)
     {
         return message.SimulateRetry switch
         {
@@ -39,10 +40,4 @@ public class BasicTracedConsumer(
             _ => Task.CompletedTask,
         };
     }
-
-    public async Task TestOnConsumeSuccess(string json, ConsumerContext context)
-        => await this.OnConsumeSuccess(json, context);
-
-    public async Task TestOnConsumeFailure(string json, ConsumerContext context,  bool retry)
-        => await this.OnConsumeFailure(json, context, retry);
 }

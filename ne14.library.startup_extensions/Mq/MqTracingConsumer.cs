@@ -7,6 +7,7 @@ namespace ne14.library.startup_extensions.Mq;
 using System.Collections.Generic;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.Logging;
+using ne14.library.fluent_errors.Extensions;
 using ne14.library.messaging.Abstractions.Consumer;
 using ne14.library.messaging.RabbitMq;
 using ne14.library.startup_extensions.Telemetry;
@@ -35,6 +36,7 @@ public abstract class MqTracingConsumer<T> : RabbitMqConsumer<T>
         this.telemeter = telemeter;
         this.logger = logger;
 
+        config.MustExist();
         this.ConsumerAppName = config["RabbitMq:ConsumerAppName"];
         this.MaximumAttempts = this.GetConfig<long>(config, nameof(this.MaximumAttempts));
 
@@ -102,7 +104,7 @@ public abstract class MqTracingConsumer<T> : RabbitMqConsumer<T>
         var tags = new KeyValuePair<string, object?>[]
         {
             new("queue", this.QueueName),
-            new("outcome", this.QueueName),
+            new("outcome", outcome),
         };
 
         this.telemeter.CaptureMetric(MetricType.Counter, 1, "mq-consume-failure", tags: tags);

@@ -5,18 +5,17 @@
 namespace ne14.library.startup_extensions.tests.Mq;
 
 using System.Diagnostics;
-using System.Text;
 using System.Text.Json;
+using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.Logging;
 using ne14.library.fluent_errors.Errors;
-using ne14.library.rabbitmq.Consumer;
-using ne14.library.rabbitmq.Vendor;
+using ne14.library.messaging.Abstractions.Consumer;
 using ne14.library.startup_extensions.Mq;
 using ne14.library.startup_extensions.Telemetry;
 using RabbitMQ.Client;
 
 /// <summary>
-/// Tests for the <see cref="TracedMqConsumer{T}"/> class.
+/// Tests for the <see cref="MqTracingConsumer{T}"/> class.
 /// </summary>
 public class TracedMqConsumerTests
 {
@@ -53,19 +52,20 @@ public class TracedMqConsumerTests
     {
         // Arrange
         var sut = GetSut<BasicTracedConsumer>(out var mocks);
-        const string json = "{ \"Foo\": \"bar\" }";
+        var payload = new BasicPayload("bar", false);
+        var json = ToJson(payload);
         const string expectedName = "mq-consume";
-        var context = new ConsumerContext { MessageId = 3ul, AttemptNumber = 3 };
+        var args = new MqConsumerEventArgs { DeliveryId = 3ul, AttemptNumber = 3, Message = json };
         var tags = new KeyValuePair<string, object?>[]
         {
             new("queue", sut.QueueName),
-            new("messageId", context.MessageId),
+            new("deliveryId", args.DeliveryId),
             new("json", json),
-            new("attempt", context.AttemptNumber),
+            new("attempt", args.AttemptNumber),
         };
 
         // Act
-        await sut.ConsumeAsync(Encoding.UTF8.GetBytes(json), context);
+        await sut.ConsumeAsync(payload, args);
 
         // Assert
         mocks.MockTelemeter.Verify(
@@ -77,12 +77,12 @@ public class TracedMqConsumerTests
     {
         // Arrange
         var sut = GetSut<BasicTracedConsumer>(out var mocks);
-        var bytes = ToBytes(new BasicPayload("hi", null));
+        var payload = new BasicPayload("hi", null);
         const string expectedName = "mq-consume-success";
         var tag = new KeyValuePair<string, object?>("queue", sut.QueueName);
 
         // Act
-        await sut.ConsumeAsync(bytes, new() { MessageId = 1ul });
+        await sut.ConsumeAsync(payload, new() { DeliveryId = 1ul, Message = ToJson(payload) });
 
         // Assert
         mocks.MockTelemeter.Verify(
@@ -96,7 +96,7 @@ public class TracedMqConsumerTests
     {
         // Arrange
         var sut = GetSut<BasicTracedConsumer>(out var mocks);
-        var bytes = ToBytes(new BasicPayload("hi", transient));
+        var payload = new BasicPayload("hi", transient);
         const string expectedName = "mq-consume-failure";
         var tags = new KeyValuePair<string, object?>[]
         {
@@ -105,7 +105,7 @@ public class TracedMqConsumerTests
         };
 
         // Act
-        await sut.ConsumeAsync(bytes, new() { MessageId = 1ul });
+        await sut.ConsumeAsync(payload, new() { DeliveryId = 1ul });
 
         // Assert
         mocks.MockTelemeter.Verify(
@@ -117,10 +117,10 @@ public class TracedMqConsumerTests
     {
         // Arrange
         var sut = GetSut<BasicTracedConsumer>(out var mocks);
-        var bytes = ToBytes(new BasicPayload("hi", true));
+        var payload = new BasicPayload("hi", true);
 
         // Act
-        await sut.ConsumeAsync(bytes, new() { MessageId = 1ul });
+        await sut.ConsumeAsync(payload, new() { DeliveryId = 1ul });
 
         // Assert
         mocks.MockChannel.Verify(m => m.BasicNack(1ul, false, true));
@@ -131,10 +131,10 @@ public class TracedMqConsumerTests
     {
         // Arrange
         var sut = GetSut<BasicTracedConsumer>(out var mocks);
-        var bytes = ToBytes(new BasicPayload("hi", null));
+        var payload = new BasicPayload("hi", null);
 
         // Act
-        await sut.ConsumeAsync(bytes, new() { MessageId = 1ul });
+        await sut.ConsumeAsync(payload, new() { DeliveryId = 1ul });
 
         // Assert
         mocks.MockChannel.Verify(m => m.BasicAck(1ul, false));
@@ -145,11 +145,11 @@ public class TracedMqConsumerTests
     {
         // Arrange
         var sut = GetSut<BasicTracedConsumer>(out var mocks);
-        var bytes = ToBytes(new BasicPayload("x", null));
+        var payload = new BasicPayload("x", null);
         var suffix = $"{sut.QueueName}#4 (2x)";
 
         // Act
-        await sut.ConsumeAsync(bytes, new() { MessageId = 4ul, AttemptNumber = 2 });
+        await sut.ConsumeAsync(payload, new() { DeliveryId = 4ul, AttemptNumber = 2 });
 
         // Assert
         mocks.MockLogger.VerifyLog(msgCheck: s => s == "Mq message incoming: " + suffix);
@@ -161,11 +161,11 @@ public class TracedMqConsumerTests
     {
         // Arrange
         var sut = GetSut<BasicTracedConsumer>(out var mocks);
-        var bytes = ToBytes(new BasicPayload("x", false));
+        var payload = new BasicPayload("x", false);
         var suffix = $"{sut.QueueName}#8 (1x)";
 
         // Act
-        await sut.ConsumeAsync(bytes, new() { MessageId = 8ul, AttemptNumber = 1 });
+        await sut.ConsumeAsync(payload, new() { DeliveryId = 8ul, AttemptNumber = 1 });
 
         // Assert
         mocks.MockLogger.VerifyLog(msgCheck: s => s == "Mq message incoming: " + suffix);
@@ -177,11 +177,11 @@ public class TracedMqConsumerTests
     {
         // Arrange
         var sut = GetSut<BasicTracedConsumer>(out var mocks);
-        var bytes = ToBytes(new BasicPayload("x", true));
+        var payload = new BasicPayload("x", true);
         var suffix = $"{sut.QueueName}#1 (9x)";
 
         // Act
-        await sut.ConsumeAsync(bytes, new() { MessageId = 1ul, AttemptNumber = 9 });
+        await sut.ConsumeAsync(payload, new() { DeliveryId = 1ul, AttemptNumber = 9 });
 
         // Assert
         mocks.MockLogger.VerifyLog(msgCheck: s => s == "Mq message incoming: " + suffix);
@@ -193,66 +193,49 @@ public class TracedMqConsumerTests
     {
         // Arrange
         var sut = GetSut<BasicTracedConsumer>(out var mocks);
-        var bytes = ToBytes(new BasicPayload("x", null));
+        var payload = new BasicPayload("x", null);
 
         // Act
-        var act = () => sut.ConsumeAsync(bytes, null!);
+        var act = () => sut.ConsumeAsync(payload, null!);
 
         // Assert
         await act.Should().ThrowAsync<DataStateException>();
     }
 
-    [Fact]
-    public async Task OnConsumeSuccess_NullContext_ThrowsException()
+    private static string ToJson(object obj)
+        => JsonSerializer.Serialize(obj);
+
+    private static T GetSut<T>(out BagOfMocks<T> mocks, params KeyValuePair<string, string?>[] config)
+        where T : MqConsumerBase
     {
-        // Arrange
-        var sut = GetSut<BasicTracedConsumer>(out var mocks);
+        var memConfig = new ConfigurationBuilder()
+            .AddInMemoryCollection(config)
+            .Build();
 
-        // Act
-        var act = () => sut.TestOnConsumeSuccess("{}", null!);
-
-        // Assert
-        await act.Should().ThrowAsync<DataStateException>();
-    }
-
-    [Fact]
-    public async Task OnConsumeFailure_NullContext_ThrowsException()
-    {
-        // Arrange
-        var sut = GetSut<BasicTracedConsumer>(out var mocks);
-
-        // Act
-        var act = () => sut.TestOnConsumeFailure("{}", null!, false);
-
-        // Assert
-        await act.Should().ThrowAsync<DataStateException>();
-    }
-
-    private static byte[] ToBytes(object obj)
-        => Encoding.UTF8.GetBytes(JsonSerializer.Serialize(obj));
-
-    private static T GetSut<T>(out BagOfMocks<T> mocks)
-        where T : ConsumerBase
-    {
         mocks = new(
-            new Mock<IRabbitMqSession>(),
             new Mock<IModel>(),
             new Mock<ITelemeter>(),
             new Mock<ILogger<T>>());
 
-        mocks.MockSession
-            .Setup(m => m.Channel)
+        var mockConnection = new Mock<IConnection>();
+        mockConnection
+            .Setup(m => m.CreateModel())
             .Returns(mocks.MockChannel.Object);
+
+        var mockConnectionFactory = new Mock<IConnectionFactory>();
+        mockConnectionFactory
+            .Setup(m => m.CreateConnection())
+            .Returns(mockConnection.Object);
 
         return (T)Activator.CreateInstance(
             typeof(T),
-            mocks.MockSession.Object,
+            mockConnectionFactory.Object,
             mocks.MockTelemeter.Object,
-            mocks.MockLogger.Object)!;
+            mocks.MockLogger.Object,
+            memConfig)!;
     }
 
     private sealed record BagOfMocks<T>(
-        Mock<IRabbitMqSession> MockSession,
         Mock<IModel> MockChannel,
         Mock<ITelemeter> MockTelemeter,
         Mock<ILogger<T>> MockLogger);

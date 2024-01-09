@@ -15,7 +15,7 @@ using RabbitMQ.Client;
 public abstract class MqTracingProducer<T> : RabbitMqProducer<T>
 {
     private readonly ITelemeter telemeter;
-    private readonly ILogger<MqTracingConsumer<T>> logger;
+    private readonly ILogger<MqTracingProducer<T>> logger;
 
     /// <summary>
     /// Initializes a new instance of the <see cref="MqTracingProducer{T}"/> class.
@@ -26,7 +26,7 @@ public abstract class MqTracingProducer<T> : RabbitMqProducer<T>
     protected MqTracingProducer(
         IConnectionFactory connectionFactory,
         ITelemeter telemeter,
-        ILogger<MqTracingConsumer<T>> logger)
+        ILogger<MqTracingProducer<T>> logger)
             : base(connectionFactory)
     {
         this.telemeter = telemeter;

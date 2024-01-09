@@ -45,5 +45,5 @@ public interface IMqConsumer<in T> : IMqConsumer
     /// <param name="message">The message.</param>
     /// <param name="args">The event args.</param>
     /// <returns>Async task.</returns>
-    public Task Consume(T message, MqConsumerEventArgs args);
+    public Task ConsumeAsync(T message, MqConsumerEventArgs args);
 }
