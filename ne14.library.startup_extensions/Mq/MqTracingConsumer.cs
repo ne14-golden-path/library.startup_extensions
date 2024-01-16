@@ -38,11 +38,9 @@ public abstract class MqTracingConsumer<T> : RabbitMqConsumer<T>
 
         config.MustExist();
 
-        // TODO: Fail if consumer app name is not populated
         this.ConsumerAppName = config["RabbitMq:ConsumerAppName"];
-
-        // TODO: Fix the nullability
-        this.MaximumAttempts = this.GetConfig<long>(config, nameof(this.MaximumAttempts));
+        this.ConsumerAppName.MustBePopulated();
+        this.MaximumAttempts = this.GetConfigValue<long>(config, nameof(this.MaximumAttempts));
 
         this.Starting += this.OnStarting;
         this.Started += this.OnStarted;
@@ -54,8 +52,8 @@ public abstract class MqTracingConsumer<T> : RabbitMqConsumer<T>
         this.MessageFailed += this.OnMessageFailed;
     }
 
-    private TProp? GetConfig<TProp>(IConfiguration config, string property)
-        where TProp : notnull
+    private TProp? GetConfigValue<TProp>(IConfiguration config, string property)
+        where TProp : struct
     {
         var queueValue = config.GetValue<TProp?>($"RabbitMq:Queues:{this.QueueName}:{property}");
         var exchangeValue = config.GetValue<TProp?>($"RabbitMq:Exchanges:{this.ExchangeName}:{property}");

@@ -89,35 +89,44 @@ public abstract class RabbitMqConsumer<T> : MqConsumerBase<T>, IDisposable
         var deliveryTag = (ulong)args.DeliveryId;
         if (args.Retry == false)
         {
-            var bytes = Encoding.UTF8.GetBytes(args.Message);
-            this.channel.BasicAck(deliveryTag, false);
-            this.channel.BasicPublish(this.ExchangeName, Tier2Route, null, bytes);
+            // NACK to DLQ
+            this.channel.BasicNack(deliveryTag, false, false);
         }
         else
         {
-            this.channel.BasicNack(deliveryTag, false, false);
+            // ACK and republish
+            var bytes = Encoding.UTF8.GetBytes(args.Message);
+            const int MaxDelaySeconds = 60;
+            var delayMilliseconds = Random.Shared.Next(MaxDelaySeconds * 1000);
+            var props = this.channel.CreateBasicProperties();
+            props.Expiration = $"{delayMilliseconds}";
+            props.Headers = new Dictionary<string, object>
+            {
+                ["x-attempt"] = args.AttemptNumber + 1,
+                ["x-born"] = args.BornOn,
+                ["x-guid"] = args.MessageGuid.ToByteArray(),
+            };
+
+            this.channel.BasicAck(deliveryTag, false);
+            this.channel.BasicPublish(this.ExchangeName, Tier1Route, props, bytes);
         }
     }
 
     [ExcludeFromCodeCoverage]
     private async Task OnConsumerReceipt(object sender, BasicDeliverEventArgs args)
     {
-        var attempt = 1L;
-        var bornOn = DateTimeOffset.UtcNow.ToUnixTimeSeconds();
         var headers = args.BasicProperties.Headers ?? new Dictionary<string, object>();
-        if (headers.TryGetValue("x-death", out var death) && death is List<object> deathList)
-        {
-            var dicto = (Dictionary<string, object>)deathList[0];
-            attempt = dicto.TryGetValue("count", out var countObj) ? (long)countObj : attempt;
-            bornOn = dicto.TryGetValue("time", out var timeObj) ? ((AmqpTimestamp)timeObj).UnixTime : bornOn;
-        }
+        var attempt = headers.TryGetValue("x-attempt", out var attemptObj) ? (long?)attemptObj : null;
+        var bornOn = headers.TryGetValue("x-born", out var bornObj) ? (long?)bornObj : null;
+        var msgGuid = headers.TryGetValue("x-guid", out var guidObj) ? new Guid((byte[])guidObj) : Guid.NewGuid();
 
         var bytes = args.Body.ToArray();
         var consumerArgs = new MqConsumerEventArgs
         {
-            AttemptNumber = attempt,
-            BornOn = bornOn,
+            AttemptNumber = attempt ?? 1,
+            BornOn = bornOn ?? DateTimeOffset.UtcNow.ToUnixTimeSeconds(),
             DeliveryId = args.DeliveryTag,
+            MessageGuid = msgGuid,
             Message = Encoding.UTF8.GetString(bytes),
         };
         await this.ConsumeInternal(args.Body.ToArray(), consumerArgs);
@@ -129,7 +138,7 @@ public abstract class RabbitMqConsumer<T> : MqConsumerBase<T>, IDisposable
         var mainQArgs = new Dictionary<string, object>
         {
             ["x-dead-letter-exchange"] = this.ExchangeName,
-            ["x-dead-letter-routing-key"] = Tier1Route,
+            ["x-dead-letter-routing-key"] = Tier2Route, // NACK to DLQ
         };
         this.channel.ExchangeDeclare(this.ExchangeName, ExchangeType.Direct, true);
         this.channel.QueueDeclare(this.QueueName, true, false, false, mainQArgs);

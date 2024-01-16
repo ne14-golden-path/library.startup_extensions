@@ -5,6 +5,7 @@
 namespace ne14.library.messaging.RabbitMq;
 
 using System;
+using System.Collections.Generic;
 using ne14.library.messaging.Abstractions.Producer;
 using RabbitMQ.Client;
 
@@ -39,6 +40,14 @@ public abstract class RabbitMqProducer<T> : MqProducerBase<T>, IDisposable
     /// <inheritdoc/>
     protected internal override void ProduceInternal(byte[] bytes)
     {
-        this.channel.BasicPublish(this.ExchangeName, DefaultRoute, null, bytes);
+        var props = this.channel.CreateBasicProperties();
+        props.Headers = new Dictionary<string, object>
+        {
+            ["x-attempt"] = 1L,
+            ["x-born"] = DateTimeOffset.UtcNow.ToUnixTimeSeconds(),
+            ["x-guid"] = Guid.NewGuid().ToByteArray(),
+        };
+
+        this.channel.BasicPublish(this.ExchangeName, DefaultRoute, props, bytes);
     }
 }

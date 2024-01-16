@@ -127,7 +127,14 @@ public abstract class MqConsumerBase<T> : MqConsumerBase, IMqConsumer<T>
         }
         catch (Exception ex)
         {
-            var failEventArgs = new MqFailedEventArgs { Error = ex };
+            var failEventArgs = new MqFailedEventArgs
+            {
+                Error = ex,
+                AttemptNumber = args.AttemptNumber,
+                BornOn = args.BornOn,
+                DeliveryId = args.DeliveryId,
+                Message = args.Message,
+            };
             failEventArgs.Retry = this.DoRetry(failEventArgs);
             this.MessageFailed?.Invoke(this, failEventArgs);
         }
