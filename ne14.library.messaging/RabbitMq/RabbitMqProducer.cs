@@ -23,7 +23,8 @@ public abstract class RabbitMqProducer<T> : MqProducerBase<T>, IDisposable
     /// <param name="connectionFactory">The connection factory.</param>
     protected RabbitMqProducer(IConnectionFactory connectionFactory)
     {
-        this.connection = connectionFactory.CreateConnection();
+        this.connection = connectionFactory?.CreateConnection()
+            ?? throw new ArgumentNullException(nameof(connectionFactory));
         this.channel = this.connection.CreateModel();
         this.channel.ExchangeDeclare(this.ExchangeName, ExchangeType.Direct, true);
     }

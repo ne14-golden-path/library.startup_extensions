@@ -35,7 +35,8 @@ public abstract class RabbitMqConsumer<T> : MqConsumerBase<T>, IDisposable
         this.MessageFailed += this.OnMessageFailed;
         this.MessageProcessed += this.OnMessageProcessed;
 
-        this.connection = connectionFactory.CreateConnection();
+        this.connection = connectionFactory?.CreateConnection()
+            ?? throw new ArgumentNullException(nameof(connectionFactory));
         this.channel = this.connection.CreateModel();
         this.consumer = new(this.channel);
     }
