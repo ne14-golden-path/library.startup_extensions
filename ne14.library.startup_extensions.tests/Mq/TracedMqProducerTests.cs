@@ -81,6 +81,11 @@ public class TracedMqProducerTests
             new Mock<ITelemeter>(),
             new Mock<ILogger<T>>());
 
+        var mockProps = new Mock<IBasicProperties>();
+        mocks.MockChannel
+            .Setup(m => m.CreateBasicProperties())
+            .Returns(mockProps.Object);
+
         var mockConnection = new Mock<IConnection>();
         mockConnection
             .Setup(m => m.CreateModel())
@@ -93,7 +98,7 @@ public class TracedMqProducerTests
 
         return (T)Activator.CreateInstance(
             typeof(T),
-            mocks.MockChannel.Object,
+            mockConnectionFactory.Object,
             mocks.MockTelemeter.Object,
             mocks.MockLogger.Object)!;
     }

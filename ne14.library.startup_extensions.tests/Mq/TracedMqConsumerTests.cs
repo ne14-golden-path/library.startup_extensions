@@ -205,17 +205,27 @@ public class TracedMqConsumerTests
     private static string ToJson(object obj)
         => JsonSerializer.Serialize(obj);
 
-    private static T GetSut<T>(out BagOfMocks<T> mocks, params KeyValuePair<string, string?>[] config)
+    private static T GetSut<T>(out BagOfMocks<T> mocks, string appName = "test")
         where T : MqConsumerBase
     {
+        var configDicto = new Dictionary<string, string?>()
+        {
+            ["RabbitMq:ConsumerAppName"] = appName,
+        };
+
         var memConfig = new ConfigurationBuilder()
-            .AddInMemoryCollection(config)
+            .AddInMemoryCollection(configDicto)
             .Build();
 
         mocks = new(
             new Mock<IModel>(),
             new Mock<ITelemeter>(),
             new Mock<ILogger<T>>());
+
+        var mockProps = new Mock<IBasicProperties>();
+        mocks.MockChannel
+            .Setup(m => m.CreateBasicProperties())
+            .Returns(mockProps.Object);
 
         var mockConnection = new Mock<IConnection>();
         mockConnection
