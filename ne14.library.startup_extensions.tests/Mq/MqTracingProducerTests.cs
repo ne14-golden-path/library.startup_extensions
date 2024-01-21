@@ -1,4 +1,4 @@
-﻿// <copyright file="TracedMqProducerTests.cs" company="ne1410s">
+﻿// <copyright file="MqTracingProducerTests.cs" company="ne1410s">
 // Copyright (c) ne1410s. All rights reserved.
 // </copyright>
 
@@ -15,7 +15,7 @@ using RabbitMQ.Client;
 /// <summary>
 /// Tests for the <see cref="MqTracingProducer{T}"/> class.
 /// </summary>
-public class TracedMqProducerTests
+public class MqTracingProducerTests
 {
     [Fact]
     public void Produce_WhenCalled_WritesLogs()

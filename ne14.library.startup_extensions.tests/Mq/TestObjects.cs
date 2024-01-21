@@ -4,6 +4,7 @@
 
 namespace ne14.library.startup_extensions.tests.Mq;
 
+using System.Reflection;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.Logging;
 using ne14.library.messaging.Abstractions.Consumer;
@@ -39,5 +40,23 @@ public class BasicTracedConsumer(
             false => throw new PermanentFailureException(),
             _ => Task.CompletedTask,
         };
+    }
+}
+
+public static class TextExtensions
+{
+    public static void FireEvent<T>(
+        this T source,
+        string eventName,
+        EventArgs? args = null)
+    {
+        var multiDelegate = typeof(T)
+            .GetField(eventName, BindingFlags.Instance | BindingFlags.NonPublic)?
+            .GetValue(source) as MulticastDelegate;
+
+        foreach (var dlg in multiDelegate!.GetInvocationList())
+        {
+            dlg.Method.Invoke(dlg.Target, [null, args ?? EventArgs.Empty]);
+        }
     }
 }
