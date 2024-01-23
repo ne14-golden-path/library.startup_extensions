@@ -6,6 +6,7 @@ namespace ne14.library.startup_extensions.tests.Mq;
 
 using System.Diagnostics;
 using System.Text.Json;
+using System.Text.Json.Serialization;
 using Microsoft.Extensions.Logging;
 using ne14.library.messaging.Abstractions.Producer;
 using ne14.library.startup_extensions.Mq;
@@ -17,6 +18,13 @@ using RabbitMQ.Client;
 /// </summary>
 public class MqTracingProducerTests
 {
+    private static readonly JsonSerializerOptions JsonOpts = new()
+    {
+        DefaultIgnoreCondition = JsonIgnoreCondition.WhenWritingNull,
+        PropertyNamingPolicy = JsonNamingPolicy.CamelCase,
+        WriteIndented = true,
+    };
+
     [Fact]
     public void Produce_WhenCalled_WritesLogs()
     {
@@ -71,7 +79,7 @@ public class MqTracingProducerTests
     }
 
     private static string ToJson(object obj)
-        => JsonSerializer.Serialize(obj);
+        => JsonSerializer.Serialize(obj, JsonOpts);
 
     private static T GetSut<T>(out BagOfMocks<T> mocks)
         where T : MqProducerBase
