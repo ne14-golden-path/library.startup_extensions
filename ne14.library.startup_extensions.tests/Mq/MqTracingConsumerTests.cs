@@ -18,6 +18,34 @@ using RabbitMQ.Client;
 public class MqTracingConsumerTests
 {
     [Fact]
+    public void Ctor_BothMaxAttemptsConfigured_TakesQueueValue()
+    {
+        // Arrange
+        const int qValue = 10;
+        const int xValue = 20;
+
+        // Act
+        var sut = GetSut<BasicTracedConsumer>(out _, "test", qValue, xValue);
+
+        // Assert
+        sut.MaximumAttempts.Should().Be(qValue);
+    }
+
+    [Fact]
+    public void Ctor_OnlyExchangeMaxAttemptsConfigured_TakesValue()
+    {
+        // Arrange
+        var qValue = (int?)null;
+        const int xValue = 20;
+
+        // Act
+        var sut = GetSut<BasicTracedConsumer>(out _, "test", qValue, xValue);
+
+        // Assert
+        sut.MaximumAttempts.Should().Be(xValue);
+    }
+
+    [Fact]
     public void OnStarting_WhenCalled_WritesExpectedLogs()
     {
         // Arrange
@@ -209,12 +237,19 @@ public class MqTracingConsumerTests
         MessageGuid = guid ?? Guid.Empty,
     };
 
-    private static T GetSut<T>(out BagOfMocks<T> mocks, string appName = "test")
+    private static T GetSut<T>(
+        out BagOfMocks<T> mocks,
+        string appName = "test",
+        int? maxAttemptsQConfig = 5,
+        int? maxAttemptsXConfig = null)
         where T : MqConsumerBase
     {
+        var queue = $"{appName}-{TestHelper.TestExchangeName}";
         var configDicto = new Dictionary<string, string?>()
         {
             ["RabbitMq:ConsumerAppName"] = appName,
+            [$"RabbitMq:Queues:{queue}:MaximumAttempts"] = $"{maxAttemptsQConfig}",
+            [$"RabbitMq:Exchanges:{TestHelper.TestExchangeName}:MaximumAttempts"] = $"{maxAttemptsXConfig}",
         };
 
         var memConfig = new ConfigurationBuilder()

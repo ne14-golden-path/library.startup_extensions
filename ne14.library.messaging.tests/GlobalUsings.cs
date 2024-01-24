@@ -2,4 +2,5 @@
 // Copyright (c) ne1410s. All rights reserved.
 // </copyright>
 
+global using Moq;
 global using Xunit;

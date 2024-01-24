@@ -20,7 +20,7 @@ public class BasicTracedProducer(
     ILogger<BasicTracedProducer> logger)
         : MqTracingProducer<BasicPayload>(connectionFactory, telemeter, logger)
 {
-    public override string ExchangeName => "basic-thing";
+    public override string ExchangeName => TestHelper.TestExchangeName;
 }
 
 public class BasicTracedConsumer(
@@ -30,7 +30,7 @@ public class BasicTracedConsumer(
     IConfiguration config)
         : MqTracingConsumer<BasicPayload>(connectionFactory, telemeter, logger, config)
 {
-    public override string ExchangeName => "basic-thing";
+    public override string ExchangeName => TestHelper.TestExchangeName;
 
     public override Task ConsumeAsync(BasicPayload message, MqConsumerEventArgs args)
     {
@@ -40,23 +40,5 @@ public class BasicTracedConsumer(
             false => throw new PermanentFailureException(),
             _ => Task.CompletedTask,
         };
-    }
-}
-
-public static class TextExtensions
-{
-    public static void FireEvent<T>(
-        this T source,
-        string eventName,
-        EventArgs? args = null)
-    {
-        var multiDelegate = typeof(T)
-            .GetField(eventName, BindingFlags.Instance | BindingFlags.NonPublic)?
-            .GetValue(source) as MulticastDelegate;
-
-        foreach (var dlg in multiDelegate!.GetInvocationList())
-        {
-            dlg.Method.Invoke(dlg.Target, [null, args ?? EventArgs.Empty]);
-        }
     }
 }

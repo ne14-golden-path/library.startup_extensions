@@ -21,13 +21,13 @@ public record BasicPayload(bool? PermaFail);
 public class BasicProducer(IConnectionFactory factory)
     : RabbitMqProducer<BasicPayload>(factory)
 {
-    public override string ExchangeName => "basic-stuff";
+    public override string ExchangeName => TestHelper.TestExchangeName;
 }
 
 public class BasicConsumer(IConnectionFactory factory)
     : RabbitMqConsumer<BasicPayload>(factory)
 {
-    public override string ExchangeName => "basic-stuff";
+    public override string ExchangeName => TestHelper.TestExchangeName;
 
     public override Task ConsumeAsync(BasicPayload message, MqConsumerEventArgs args)
     {
