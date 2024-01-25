@@ -8,6 +8,7 @@ using FluentAssertions;
 using ne14.library.messaging.Abstractions.Consumer;
 using ne14.library.messaging.RabbitMq;
 using RabbitMQ.Client;
+using RabbitMQ.Client.Events;
 
 /// <summary>
 /// Tests for the <see cref="RabbitMqConsumer{T}"/> class.
@@ -52,6 +53,65 @@ public class RabbitMqConsumerTests
         // Assert
         mocks.MockChannel.Verify(m => m.Close());
         mocks.MockConnection.Verify(m => m.Close());
+    }
+
+    [Fact]
+    public async Task OnConsumerReceipt_NullArgs_ThrowsException()
+    {
+        // Arrange
+        var sut = GetSut<BasicConsumer>(out _);
+
+        // Act
+        var act = () => sut.TestConsumerReceipt(null!, null!);
+
+        // Assert
+        await act.Should().ThrowAsync<ArgumentNullException>()
+            .WithMessage("Value cannot be null. (Parameter 'args')");
+    }
+
+    [Fact]
+    public async Task OnConsumerReceipt_WithArgs_CallsMessageReceived()
+    {
+        // Arrange
+        var sut = GetSut<BasicConsumer>(out _);
+        var received = 0;
+        sut.MessageReceived += (_, _) => received++;
+
+        // Act
+        await sut.TestConsumerReceipt(null!, GetArgs());
+
+        // Assert
+        received.Should().Be(1);
+    }
+
+    [Fact]
+    public async Task StartStopCycle_WhenCalled_HitsExpected()
+    {
+        // Arrange
+        var sut = GetSut<BasicConsumer>(out _);
+        var events = new List<int>();
+        sut.Starting += (_, _) => events.Add(1);
+        sut.Started += (_, _) => events.Add(2);
+        sut.Stopping += (_, _) => events.Add(3);
+        sut.Stopped += (_, _) => events.Add(4);
+        var expected = new[] { 1, 2, 3, 4 };
+
+        // Act
+        await sut.StartAsync(CancellationToken.None);
+        await sut.StopAsync(CancellationToken.None);
+
+        // Assert
+        events.Should().BeEquivalentTo(expected);
+    }
+
+    private static BasicDeliverEventArgs GetArgs()
+    {
+        var mockProps = new Mock<IBasicProperties>();
+        return new()
+        {
+            BasicProperties = mockProps.Object,
+            Body = new byte[] { 1, 2, 3 },
+        };
     }
 
     private static T GetSut<T>(out BagOfMocks mocks)

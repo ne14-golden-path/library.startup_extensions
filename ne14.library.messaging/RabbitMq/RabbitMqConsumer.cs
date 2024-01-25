@@ -6,7 +6,6 @@ namespace ne14.library.messaging.RabbitMq;
 
 using System;
 using System.Collections.Generic;
-using System.Diagnostics.CodeAnalysis;
 using System.Text;
 using System.Threading;
 using System.Threading.Tasks;
@@ -79,6 +78,32 @@ public abstract class RabbitMqConsumer<T> : MqConsumerBase<T>, IDisposable
         return Task.CompletedTask;
     }
 
+    /// <summary>
+    /// Handles consumer receipt.
+    /// </summary>
+    /// <param name="sender">The sender.</param>
+    /// <param name="args">The event args.</param>
+    /// <returns>Async task.</returns>
+    protected internal async Task OnConsumerReceipt(object sender, BasicDeliverEventArgs args)
+    {
+        args = args ?? throw new ArgumentNullException(nameof(args));
+        var headers = args.BasicProperties.Headers ?? new Dictionary<string, object>();
+        var attempt = headers.TryGetValue("x-attempt", out var attemptObj) ? (long?)attemptObj : null;
+        var bornOn = headers.TryGetValue("x-born", out var bornObj) ? (long?)bornObj : null;
+        var msgGuid = headers.TryGetValue("x-guid", out var guidObj) ? new Guid((byte[])guidObj) : Guid.NewGuid();
+
+        var bytes = args.Body.ToArray();
+        var consumerArgs = new MqConsumerEventArgs
+        {
+            AttemptNumber = attempt ?? 1,
+            BornOn = bornOn ?? DateTimeOffset.UtcNow.ToUnixTimeSeconds(),
+            DeliveryId = args.DeliveryTag,
+            MessageGuid = msgGuid,
+            Message = Encoding.UTF8.GetString(bytes),
+        };
+        await this.ConsumeInternal(args.Body.ToArray(), consumerArgs);
+    }
+
     private void OnMessageProcessed(object? sender, MqConsumerEventArgs args)
     {
         var deliveryTag = (ulong)args.DeliveryId;
@@ -111,26 +136,6 @@ public abstract class RabbitMqConsumer<T> : MqConsumerBase<T>, IDisposable
             this.channel.BasicAck(deliveryTag, false);
             this.channel.BasicPublish(this.ExchangeName, Tier1Route, props, bytes);
         }
-    }
-
-    [ExcludeFromCodeCoverage]
-    private async Task OnConsumerReceipt(object sender, BasicDeliverEventArgs args)
-    {
-        var headers = args.BasicProperties.Headers ?? new Dictionary<string, object>();
-        var attempt = headers.TryGetValue("x-attempt", out var attemptObj) ? (long?)attemptObj : null;
-        var bornOn = headers.TryGetValue("x-born", out var bornObj) ? (long?)bornObj : null;
-        var msgGuid = headers.TryGetValue("x-guid", out var guidObj) ? new Guid((byte[])guidObj) : Guid.NewGuid();
-
-        var bytes = args.Body.ToArray();
-        var consumerArgs = new MqConsumerEventArgs
-        {
-            AttemptNumber = attempt ?? 1,
-            BornOn = bornOn ?? DateTimeOffset.UtcNow.ToUnixTimeSeconds(),
-            DeliveryId = args.DeliveryTag,
-            MessageGuid = msgGuid,
-            Message = Encoding.UTF8.GetString(bytes),
-        };
-        await this.ConsumeInternal(args.Body.ToArray(), consumerArgs);
     }
 
     private void DeclareTopology()

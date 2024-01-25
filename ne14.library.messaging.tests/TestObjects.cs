@@ -5,6 +5,7 @@
 using ne14.library.messaging.Abstractions.Consumer;
 using ne14.library.messaging.RabbitMq;
 using RabbitMQ.Client;
+using RabbitMQ.Client.Events;
 
 namespace ne14.library.messaging.tests;
 
@@ -38,4 +39,7 @@ public class BasicConsumer(IConnectionFactory factory)
             _ => Task.CompletedTask,
         };
     }
+
+    public async Task TestConsumerReceipt(object sender, BasicDeliverEventArgs args)
+        => await this.OnConsumerReceipt(sender, args);
 }
