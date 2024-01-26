@@ -104,6 +104,48 @@ public class RabbitMqConsumerTests
         events.Should().BeEquivalentTo(expected);
     }
 
+    [Fact]
+    public async Task ConsumeAsync_WhenPassing_DoesNotThrow()
+    {
+        // Arrange
+        var sut = GetSut<BasicConsumer>(out var mocks);
+        var payload = new BasicPayload(null);
+
+        // Act
+        var act = () => sut.ConsumeAsync(payload, GetMqArgs());
+
+        // Assert
+        await act.Should().NotThrowAsync();
+    }
+
+    [Fact]
+    public async Task ConsumeAsync_WhenTempFail_ThrowsExpected()
+    {
+        // Arrange
+        var sut = GetSut<BasicConsumer>(out var mocks);
+        var payload = new BasicPayload(false);
+
+        // Act
+        var act = () => sut.ConsumeAsync(payload, GetMqArgs());
+
+        // Assert
+        await act.Should().ThrowAsync<TransientFailureException>();
+    }
+
+    [Fact]
+    public async Task ConsumeAsync_WhenPermaFail_ThrowsExpected()
+    {
+        // Arrange
+        var sut = GetSut<BasicConsumer>(out var mocks);
+        var payload = new BasicPayload(true);
+
+        // Act
+        var act = () => sut.ConsumeAsync(payload, GetMqArgs());
+
+        // Assert
+        await act.Should().ThrowAsync<PermanentFailureException>();
+    }
+
     private static BasicDeliverEventArgs GetArgs()
     {
         var mockProps = new Mock<IBasicProperties>();
@@ -111,6 +153,18 @@ public class RabbitMqConsumerTests
         {
             BasicProperties = mockProps.Object,
             Body = new byte[] { 1, 2, 3 },
+        };
+    }
+
+    private static MqConsumerEventArgs GetMqArgs(Guid? messageId = null)
+    {
+        return new()
+        {
+           AttemptNumber = 1,
+           BornOn = 1,
+           DeliveryId = 1,
+           Message = "hi",
+           MessageGuid = messageId ?? Guid.NewGuid(),
         };
     }
 
