@@ -4,6 +4,7 @@
 
 namespace ne14.library.messaging.tests.RabbitMq;
 
+using System.Text;
 using FluentAssertions;
 using ne14.library.messaging.Abstractions.Consumer;
 using ne14.library.messaging.RabbitMq;
@@ -70,18 +71,33 @@ public class RabbitMqConsumerTests
     }
 
     [Fact]
-    public async Task OnConsumerReceipt_WithArgs_CallsMessageReceived()
+    public async Task OnConsumerReceipt_WithValidJson_CallsMessageProcessed()
     {
         // Arrange
         var sut = GetSut<BasicConsumer>(out _);
-        var received = 0;
-        sut.MessageReceived += (_, _) => received++;
+        var count = 0;
+        sut.MessageProcessed += (_, _) => count++;
 
         // Act
         await sut.TestConsumerReceipt(null!, GetArgs());
 
         // Assert
-        received.Should().Be(1);
+        count.Should().Be(1);
+    }
+
+    [Fact]
+    public async Task OnConsumerReceipt_WithInvalidJson_CallsMessageFailed()
+    {
+        // Arrange
+        var sut = GetSut<BasicConsumer>(out _);
+        var count = 0;
+        sut.MessageFailed += (_, _) => count++;
+
+        // Act
+        await sut.TestConsumerReceipt(null!, GetArgs("<not-json>"));
+
+        // Assert
+        count.Should().Be(1);
     }
 
     [Fact]
@@ -129,7 +145,8 @@ public class RabbitMqConsumerTests
         var act = () => sut.ConsumeAsync(payload, GetMqArgs());
 
         // Assert
-        await act.Should().ThrowAsync<TransientFailureException>();
+        await act.Should().ThrowAsync<TransientFailureException>()
+            .WithMessage("transient failure");
     }
 
     [Fact]
@@ -143,16 +160,17 @@ public class RabbitMqConsumerTests
         var act = () => sut.ConsumeAsync(payload, GetMqArgs());
 
         // Assert
-        await act.Should().ThrowAsync<PermanentFailureException>();
+        await act.Should().ThrowAsync<PermanentFailureException>()
+            .WithMessage("permanent failure");
     }
 
-    private static BasicDeliverEventArgs GetArgs()
+    private static BasicDeliverEventArgs GetArgs(string json = "{}")
     {
         var mockProps = new Mock<IBasicProperties>();
         return new()
         {
             BasicProperties = mockProps.Object,
-            Body = new byte[] { 1, 2, 3 },
+            Body = Encoding.UTF8.GetBytes(json),
         };
     }
 
@@ -179,6 +197,10 @@ public class RabbitMqConsumerTests
         mocks.MockChannel
             .Setup(m => m.CreateBasicProperties())
             .Returns(mockProps.Object);
+        mocks.MockChannel
+            .Setup(m => m.BasicConsume(
+                It.IsAny<string>(), false, string.Empty, false, false, null, It.IsAny<IBasicConsumer>()))
+            .Returns("tag");
 
         mocks.MockConnection
             .Setup(m => m.CreateModel())

@@ -15,6 +15,7 @@ public class TransientFailureException : Exception
     /// Initializes a new instance of the <see cref="TransientFailureException"/> class.
     /// </summary>
     public TransientFailureException()
+        : this("transient failure")
     { }
 
     /// <summary>
@@ -22,7 +23,7 @@ public class TransientFailureException : Exception
     /// </summary>
     /// <param name="message">The message.</param>
     public TransientFailureException(string message)
-        : base(message)
+        : this(message, null)
     { }
 
     /// <summary>
@@ -30,7 +31,7 @@ public class TransientFailureException : Exception
     /// </summary>
     /// <param name="message">The message.</param>
     /// <param name="innerException">The underlying exception.</param>
-    public TransientFailureException(string message, Exception innerException)
+    public TransientFailureException(string message, Exception? innerException)
         : base(message, innerException)
     { }
 }

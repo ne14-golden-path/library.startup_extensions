@@ -15,6 +15,7 @@ public class PermanentFailureException : Exception
     /// Initializes a new instance of the <see cref="PermanentFailureException"/> class.
     /// </summary>
     public PermanentFailureException()
+        : this("permanent failure")
     { }
 
     /// <summary>
@@ -22,7 +23,7 @@ public class PermanentFailureException : Exception
     /// </summary>
     /// <param name="message">The message.</param>
     public PermanentFailureException(string message)
-        : base(message)
+        : this(message, null)
     { }
 
     /// <summary>
@@ -30,7 +31,7 @@ public class PermanentFailureException : Exception
     /// </summary>
     /// <param name="message">The message.</param>
     /// <param name="innerException">The underlying exception.</param>
-    public PermanentFailureException(string message, Exception innerException)
+    public PermanentFailureException(string message, Exception? innerException)
         : base(message, innerException)
     { }
 }
