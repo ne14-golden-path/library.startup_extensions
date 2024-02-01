@@ -101,6 +101,29 @@ public class RabbitMqConsumerTests
     }
 
     [Fact]
+    public async Task OnConsumerReceipt_WithHeaders_CallsExpected()
+    {
+        // Arrange
+        var epoch = new DateTimeOffset(2002, 2, 14, 8, 0, 0, TimeSpan.Zero).ToUnixTimeSeconds();
+        var headers = new Dictionary<string, object>
+        {
+            ["x-attempt"] = 42L,
+            ["x-born"] = epoch,
+            ["x-guid"] = Guid.NewGuid().ToByteArray(),
+        };
+
+        var sut = GetSut<BasicConsumer>(out var mocks);
+        var argsReceived = (MqConsumerEventArgs)null!;
+        sut.MessageReceived += (_, args) => argsReceived = args;
+
+        // Act
+        await sut.TestConsumerReceipt(null!, GetArgs(headers: headers));
+
+        // Assert
+        argsReceived.BornOn.Should().Be(epoch);
+    }
+
+    [Fact]
     public async Task StartStopCycle_WhenCalled_HitsExpected()
     {
         // Arrange
@@ -164,9 +187,14 @@ public class RabbitMqConsumerTests
             .WithMessage("permanent failure");
     }
 
-    private static BasicDeliverEventArgs GetArgs(string json = "{}")
+    private static BasicDeliverEventArgs GetArgs(
+        string json = "{}",
+        Dictionary<string, object>? headers = null)
     {
         var mockProps = new Mock<IBasicProperties>();
+        mockProps
+            .Setup(m => m.Headers)
+            .Returns(headers ?? []);
         return new()
         {
             BasicProperties = mockProps.Object,
@@ -174,7 +202,7 @@ public class RabbitMqConsumerTests
         };
     }
 
-    private static MqConsumerEventArgs GetMqArgs(Guid? messageId = null)
+    private static MqConsumerEventArgs GetMqArgs()
     {
         return new()
         {
@@ -182,7 +210,7 @@ public class RabbitMqConsumerTests
            BornOn = 1,
            DeliveryId = 1,
            Message = "hi",
-           MessageGuid = messageId ?? Guid.NewGuid(),
+           MessageGuid = Guid.NewGuid(),
         };
     }
 
