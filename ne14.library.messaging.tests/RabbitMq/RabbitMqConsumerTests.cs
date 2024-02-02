@@ -187,6 +187,21 @@ public class RabbitMqConsumerTests
             .WithMessage("permanent failure");
     }
 
+    [Fact]
+    public async Task ConsumeInternal_UnimplementedEventsInvalidJson_CallsMessageReceived()
+    {
+        // Arrange
+        var sut = new GenericConsumer();
+        var count = 0;
+        sut.MessageReceived += (_, _) => count++;
+
+        // Act
+        await sut.TestConsume(new(true), GetMqArgs());
+
+        // Assert
+        count.Should().Be(1);
+    }
+
     private static BasicDeliverEventArgs GetArgs(
         string json = "{}",
         Dictionary<string, object>? headers = null)
@@ -194,7 +209,7 @@ public class RabbitMqConsumerTests
         var mockProps = new Mock<IBasicProperties>();
         mockProps
             .Setup(m => m.Headers)
-            .Returns(headers ?? []);
+            .Returns(headers!);
         return new()
         {
             BasicProperties = mockProps.Object,
