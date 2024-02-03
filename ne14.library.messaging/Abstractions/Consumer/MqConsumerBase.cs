@@ -117,6 +117,7 @@ public abstract class MqConsumerBase<T> : MqConsumerBase, IMqConsumer<T>
     /// <returns>Async task.</returns>
     protected internal async Task ConsumeInternal(byte[] rawMessage, MqConsumerEventArgs args)
     {
+        args = args ?? throw new ArgumentNullException(nameof(args));
         this.MessageReceived?.Invoke(this, args);
         T? message = default;
         try
@@ -147,7 +148,7 @@ public abstract class MqConsumerBase<T> : MqConsumerBase, IMqConsumer<T>
     /// <returns>Whether the message should be retried.</returns>
     protected virtual bool DoRetry(MqFailedEventArgs args)
     {
-        var attempt = args.AttemptNumber;
+        var attempt = args?.AttemptNumber ?? throw new ArgumentNullException(nameof(args));
         return args.Error is not PermanentFailureException
             && (this.MaximumAttempts == null || attempt < this.MaximumAttempts);
     }

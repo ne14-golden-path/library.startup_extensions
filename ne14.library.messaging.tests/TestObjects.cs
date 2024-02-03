@@ -71,6 +71,8 @@ public class GenericConsumer : MqConsumerBase<BasicPayload>
         await this.ConsumeInternal(Encoding.UTF8.GetBytes(json), args);
     }
 
+    public bool TestDoRetry(MqFailedEventArgs args) => this.DoRetry(args);
+
     protected override Task StartInternal(CancellationToken token) => Task.CompletedTask;
 
     protected override Task StopInternal(CancellationToken token) => Task.CompletedTask;

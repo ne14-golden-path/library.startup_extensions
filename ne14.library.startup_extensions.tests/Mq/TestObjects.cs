@@ -4,7 +4,6 @@
 
 namespace ne14.library.startup_extensions.tests.Mq;
 
-using System.Reflection;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.Logging;
 using ne14.library.messaging.Abstractions.Consumer;

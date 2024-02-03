@@ -10,6 +10,20 @@ using ne14.library.messaging.Abstractions.Consumer;
 public class MqConsumerBaseTests
 {
     [Fact]
+    public async Task ConsumeInternal_NullArgs_ThrowsException()
+    {
+        // Arrange
+        var sut = new GenericConsumer();
+
+        // Act
+        var act = () => sut.TestConsume(new(null), null!);
+
+        // Assert
+        await act.Should().ThrowAsync<ArgumentNullException>()
+            .WithParameterName("args");
+    }
+
+    [Fact]
     public async Task ConsumeInternal_UnimplementedEvents_CallsMessageReceived()
     {
         // Arrange
@@ -44,6 +58,20 @@ public class MqConsumerBaseTests
 
         // Assert
         failArgs.Retry.Should().Be(expectRetry);
+    }
+
+    [Fact]
+    public void DoRetry_NullArgs_ThrowsException()
+    {
+        // Arrange
+        var sut = new GenericConsumer();
+
+        // Act
+        var act = () => sut.TestDoRetry(null!);
+
+        // Assert
+        act.Should().Throw<ArgumentNullException>()
+            .WithParameterName("args");
     }
 
     private static MqConsumerEventArgs GetMqArgs(long attempt = 1)
