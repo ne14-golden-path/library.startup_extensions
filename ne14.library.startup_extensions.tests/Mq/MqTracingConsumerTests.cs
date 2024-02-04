@@ -7,6 +7,7 @@ namespace ne14.library.startup_extensions.tests.Mq;
 using System.Diagnostics;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.Logging;
+using ne14.library.fluent_errors.Errors;
 using ne14.library.messaging.Abstractions.Consumer;
 using ne14.library.startup_extensions.Mq;
 using ne14.library.startup_extensions.Telemetry;
@@ -43,6 +44,44 @@ public class MqTracingConsumerTests
 
         // Assert
         sut.MaximumAttempts.Should().Be(xValue);
+    }
+
+    [Fact]
+    public void Ctor_NullConfig_ThrowsException()
+    {
+        // Arrange
+        var mockConnection = new Mock<IConnection>();
+        var mockFactory = new Mock<IConnectionFactory>();
+        mockFactory.Setup(m => m.CreateConnection()).Returns(mockConnection.Object);
+
+        // Act
+        var act = () => new BasicTracedConsumer(
+            mockFactory.Object,
+            new Mock<ITelemeter>().Object,
+            new Mock<ILogger<BasicTracedConsumer>>().Object,
+            null!);
+
+        // Assert
+        act.Should().Throw<ResourceMissingException>();
+    }
+
+    [Fact]
+    public void Ctor_MissingAppName_ThrowsException()
+    {
+        // Arrange
+        var mockConnection = new Mock<IConnection>();
+        var mockFactory = new Mock<IConnectionFactory>();
+        mockFactory.Setup(m => m.CreateConnection()).Returns(mockConnection.Object);
+
+        // Act
+        var act = () => new BasicTracedConsumer(
+            mockFactory.Object,
+            new Mock<ITelemeter>().Object,
+            new Mock<ILogger<BasicTracedConsumer>>().Object,
+            new Mock<IConfiguration>().Object);
+
+        // Assert
+        act.Should().Throw<DataStateException>();
     }
 
     [Fact]
