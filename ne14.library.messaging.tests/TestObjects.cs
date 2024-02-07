@@ -4,6 +4,7 @@
 
 namespace ne14.library.messaging.tests;
 
+using System.Collections.ObjectModel;
 using System.Text;
 using System.Text.Json;
 using ne14.library.messaging.Abstractions.Consumer;
@@ -51,7 +52,10 @@ public class GenericConsumer : MqConsumerBase<BasicPayload>
     public GenericConsumer(long? maximumAttempts = null)
     {
         this.MaximumAttempts = maximumAttempts;
+        this.ConsumerAppName = "PascalCase";
     }
+
+    public Collection<string> Lifecycle { get; } = [];
 
     public override string ExchangeName => TestHelper.TestExchangeName;
 
@@ -66,14 +70,22 @@ public class GenericConsumer : MqConsumerBase<BasicPayload>
     }
 
     public async Task TestConsume(BasicPayload payload, MqConsumerEventArgs args)
-    {
-        var json = JsonSerializer.Serialize(payload);
-        await this.ConsumeInternal(Encoding.UTF8.GetBytes(json), args);
-    }
+        => await this.TestConsume(JsonSerializer.Serialize(payload), args);
+
+    public async Task TestConsume(string json, MqConsumerEventArgs args)
+        => await this.ConsumeInternal(Encoding.UTF8.GetBytes(json), args);
 
     public bool TestDoRetry(MqFailedEventArgs args) => this.DoRetry(args);
 
-    protected override Task StartInternal(CancellationToken token) => Task.CompletedTask;
+    protected override Task StartInternal(CancellationToken token)
+    {
+        this.Lifecycle.Add("StartInternal");
+        return Task.CompletedTask;
+    }
 
-    protected override Task StopInternal(CancellationToken token) => Task.CompletedTask;
+    protected override Task StopInternal(CancellationToken token)
+    {
+        this.Lifecycle.Add("StopInternal");
+        return Task.CompletedTask;
+    }
 }

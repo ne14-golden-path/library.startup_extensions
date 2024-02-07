@@ -4,6 +4,7 @@
 
 namespace ne14.library.messaging.tests.RabbitMq;
 
+using System.Text.Json;
 using FluentAssertions;
 using ne14.library.messaging.Abstractions.Producer;
 using ne14.library.messaging.RabbitMq;
@@ -23,6 +24,7 @@ public class RabbitMqProducerTests
         // Act
         var act = () => new BasicProducer(factory);
 
+        // Assert
         act.Should().Throw<ArgumentNullException>()
             .WithMessage("Value cannot be null. (Parameter 'connectionFactory')");
     }
@@ -36,8 +38,20 @@ public class RabbitMqProducerTests
         // Act
         var act = () => new BasicProducer(mockFactory.Object);
 
+        // Assert
         act.Should().Throw<ArgumentNullException>()
             .WithMessage("Value cannot be null. (Parameter 'connectionFactory')");
+    }
+
+    [Fact]
+    public void Ctor_WithFactory_DeclaresExchange()
+    {
+        // Arrange & Act
+        var sut = GetSut<BasicProducer>(out var mocks);
+
+        // Assert
+        mocks.MockChannel.Verify(
+            m => m.ExchangeDeclare(sut.ExchangeName, ExchangeType.Direct, true, false, null));
     }
 
     [Fact]
@@ -74,6 +88,24 @@ public class RabbitMqProducerTests
     }
 
     [Fact]
+    public void Produce_WhenCalled_SetsExpectedHeaders()
+    {
+        // Arrange
+        var sut = GetSut<BasicProducer>(out var mocks);
+        var actual = (IDictionary<string, object>)null!;
+        var expectedKeys = new[] { "x-attempt", "x-born", "x-guid" };
+        mocks.MockProperties
+            .SetupSet(p => p.Headers = It.IsAny<IDictionary<string, object>>())
+            .Callback<IDictionary<string, object>>(value => actual = value);
+
+        // Act
+        sut.Produce(new(null));
+
+        // Assert
+        actual.Should().ContainKeys(expectedKeys);
+    }
+
+    [Fact]
     public void Produce_WhenCalled_HitsEventHandlers()
     {
         // Arrange
@@ -89,17 +121,18 @@ public class RabbitMqProducerTests
         count.Should().Be(2);
     }
 
-    private static T GetSut<T>(out BagOfMocks mocks)
-       where T : MqProducerBase
+    private static T GetSut<T>(
+        out BagOfMocks mocks)
+        where T : MqProducerBase
     {
         mocks = new(
             new Mock<IModel>(),
-            new Mock<IConnection>());
+            new Mock<IConnection>(),
+            new Mock<IBasicProperties>());
 
-        var mockProps = new Mock<IBasicProperties>();
         mocks.MockChannel
             .Setup(m => m.CreateBasicProperties())
-            .Returns(mockProps.Object);
+            .Returns(mocks.MockProperties.Object);
 
         mocks.MockConnection
             .Setup(m => m.CreateModel())
@@ -117,5 +150,6 @@ public class RabbitMqProducerTests
 
     private sealed record BagOfMocks(
         Mock<IModel> MockChannel,
-        Mock<IConnection> MockConnection);
+        Mock<IConnection> MockConnection,
+        Mock<IBasicProperties> MockProperties);
 }

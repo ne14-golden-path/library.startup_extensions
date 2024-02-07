@@ -196,7 +196,7 @@ public class RabbitMqConsumerTests
         sut.MessageReceived += (_, _) => count++;
 
         // Act
-        await sut.TestConsume(new(true), GetMqArgs());
+        await sut.TestConsume(new BasicPayload(true), GetMqArgs());
 
         // Assert
         count.Should().Be(1);
