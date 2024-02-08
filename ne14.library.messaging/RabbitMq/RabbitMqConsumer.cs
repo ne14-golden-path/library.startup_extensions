@@ -122,8 +122,8 @@ public abstract class RabbitMqConsumer<T> : MqConsumerBase<T>, IDisposable
         {
             // ACK and republish
             var bytes = Encoding.UTF8.GetBytes(args.Message);
-            const int MaxDelaySeconds = 60;
-            var delayMilliseconds = Random.Shared.Next(MaxDelaySeconds * 1000);
+            const int maxDelayMilliseconds = 60000;
+            var delayMilliseconds = Random.Shared.Next(maxDelayMilliseconds);
             var props = this.channel.CreateBasicProperties();
             props.Expiration = $"{delayMilliseconds}";
             props.Headers = new Dictionary<string, object>

@@ -31,6 +31,8 @@ public class BasicProducer(IConnectionFactory factory)
 public class BasicConsumer(IConnectionFactory factory)
     : RabbitMqConsumer<BasicPayload>(factory)
 {
+    public Collection<string> Lifecycle { get; } = [];
+
     public override string ExchangeName => TestHelper.TestExchangeName;
 
     public override Task ConsumeAsync(BasicPayload message, MqConsumerEventArgs args)

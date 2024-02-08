@@ -74,30 +74,26 @@ public class RabbitMqConsumerTests
     public async Task OnConsumerReceipt_WithValidJson_CallsMessageProcessed()
     {
         // Arrange
-        var sut = GetSut<BasicConsumer>(out _);
-        var count = 0;
-        sut.MessageProcessed += (_, _) => count++;
+        var sut = GetSut<BasicConsumer>(out var mocks);
 
         // Act
         await sut.TestConsumerReceipt(null!, GetArgs());
 
         // Assert
-        count.Should().Be(1);
+        mocks.MockChannel.Verify(m => m.BasicAck(It.IsAny<ulong>(), false));
     }
 
     [Fact]
     public async Task OnConsumerReceipt_WithInvalidJson_CallsMessageFailed()
     {
         // Arrange
-        var sut = GetSut<BasicConsumer>(out _);
-        var count = 0;
-        sut.MessageFailed += (_, _) => count++;
+        var sut = GetSut<BasicConsumer>(out var mocks);
 
         // Act
         await sut.TestConsumerReceipt(null!, GetArgs("<not-json>"));
 
         // Assert
-        count.Should().Be(1);
+        mocks.MockChannel.Verify(m => m.BasicNack(It.IsAny<ulong>(), false, false));
     }
 
     [Fact]
@@ -144,6 +140,42 @@ public class RabbitMqConsumerTests
     }
 
     [Fact]
+    public async Task StartAsync_CalledTwice_CallsBasicConsumeOnce()
+    {
+        // Arrange
+        var sut = GetSut<BasicConsumer>(out var mocks);
+        var token = CancellationToken.None;
+
+        // Act
+        await sut.StartAsync(token);
+        await sut.StartAsync(token);
+
+        // Assert
+        mocks.MockChannel.Verify(
+            m => m.BasicConsume(
+                sut.QueueName, false, It.IsAny<string>(), false, false, null, It.IsAny<IBasicConsumer>()),
+            Times.Once());
+    }
+
+    [Fact]
+    public async Task StopAsync_CalledTwice_CallsBasicCancelOnce()
+    {
+        // Arrange
+        var sut = GetSut<BasicConsumer>(out var mocks);
+        var token = CancellationToken.None;
+
+        // Act
+        await sut.StartAsync(token);
+        await sut.StopAsync(token);
+        await sut.StopAsync(token);
+
+        // Assert
+        mocks.MockChannel.Verify(
+            m => m.BasicCancel(It.IsAny<string>()),
+            Times.Once());
+    }
+
+    [Fact]
     public async Task ConsumeAsync_WhenPassing_DoesNotThrow()
     {
         // Arrange
@@ -170,6 +202,47 @@ public class RabbitMqConsumerTests
         // Assert
         await act.Should().ThrowAsync<TransientFailureException>()
             .WithMessage("transient failure");
+    }
+
+    [Fact]
+    public async Task ConsumeAsync_WhenTempFail_SetsExpectedProperties()
+    {
+        // Arrange
+        var sut = GetSut<BasicConsumer>(out var mocks);
+        var actualHeaders = (IDictionary<string, object>)null!;
+        var actualExpiration = (string)null!;
+        mocks.MockProperties
+            .SetupSet(p => p.Headers = It.IsAny<IDictionary<string, object>>())
+            .Callback<IDictionary<string, object>>(value => actualHeaders = value);
+        mocks.MockProperties
+            .SetupSet(p => p.Expiration = It.IsAny<string>())
+            .Callback<string>(value => actualExpiration = value);
+        var expectedKeys = new[] { "x-attempt", "x-born", "x-guid" };
+
+        // Act
+        await sut.TestConsumerReceipt(null!, GetArgs("{ \"PermaFail\": false }"));
+
+        // Assert
+        actualExpiration.Should().NotBeNullOrEmpty();
+        actualHeaders.Keys.Should().Contain(expectedKeys);
+        actualHeaders["x-attempt"].Should().Be(2);
+    }
+
+    [Fact]
+    public async Task ConsumeAsync_WhenTempFail_CallsChannelMethods()
+    {
+        // Arrange
+        var sut = GetSut<BasicConsumer>(out var mocks);
+        const string json = "{ \"PermaFail\": false }";
+
+        // Act
+        await sut.TestConsumerReceipt(null!, GetArgs(json));
+
+        // Assert
+        mocks.MockChannel.Verify(m => m.BasicAck(It.IsAny<ulong>(), false));
+        mocks.MockChannel.Verify(
+            m => m.BasicPublish(
+                sut.ExchangeName, "T1_RETRY", false, It.IsAny<IBasicProperties>(), It.IsAny<ReadOnlyMemory<byte>>()));
     }
 
     [Fact]
@@ -234,12 +307,12 @@ public class RabbitMqConsumerTests
     {
         mocks = new(
             new Mock<IModel>(),
-            new Mock<IConnection>());
+            new Mock<IConnection>(),
+            new Mock<IBasicProperties>());
 
-        var mockProps = new Mock<IBasicProperties>();
         mocks.MockChannel
             .Setup(m => m.CreateBasicProperties())
-            .Returns(mockProps.Object);
+            .Returns(mocks.MockProperties.Object);
         mocks.MockChannel
             .Setup(m => m.BasicConsume(
                 It.IsAny<string>(), false, string.Empty, false, false, null, It.IsAny<IBasicConsumer>()))
@@ -261,5 +334,6 @@ public class RabbitMqConsumerTests
 
     private sealed record BagOfMocks(
         Mock<IModel> MockChannel,
-        Mock<IConnection> MockConnection);
+        Mock<IConnection> MockConnection,
+        Mock<IBasicProperties> MockProperties);
 }
