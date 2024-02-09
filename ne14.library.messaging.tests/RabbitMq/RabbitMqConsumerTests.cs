@@ -101,11 +101,12 @@ public class RabbitMqConsumerTests
     {
         // Arrange
         var epoch = new DateTimeOffset(2002, 2, 14, 8, 0, 0, TimeSpan.Zero).ToUnixTimeSeconds();
+        var messageGuid = Guid.NewGuid();
         var headers = new Dictionary<string, object>
         {
             ["x-attempt"] = 42L,
             ["x-born"] = epoch,
-            ["x-guid"] = Guid.NewGuid().ToByteArray(),
+            ["x-guid"] = messageGuid.ToByteArray(),
         };
 
         var sut = GetSut<BasicConsumer>(out var mocks);
@@ -117,6 +118,8 @@ public class RabbitMqConsumerTests
 
         // Assert
         argsReceived.BornOn.Should().Be(epoch);
+        argsReceived.AttemptNumber.Should().Be(42L);
+        argsReceived.MessageGuid.Should().Be(messageGuid);
     }
 
     [Fact]
@@ -155,6 +158,61 @@ public class RabbitMqConsumerTests
             m => m.BasicConsume(
                 sut.QueueName, false, It.IsAny<string>(), false, false, null, It.IsAny<IBasicConsumer>()),
             Times.Once());
+    }
+
+    [Fact]
+    public async Task StartAsync_WhenCalled_DeclaresMainQueue()
+    {
+        // Arrange
+        var sut = GetSut<BasicConsumer>(out var mocks);
+        var expectedHeaders = new Dictionary<string, object>
+        {
+            ["x-dead-letter-exchange"] = sut.ExchangeName,
+            ["x-dead-letter-routing-key"] = "T2_DLQ",
+        };
+
+        // Act
+        await sut.StartAsync(CancellationToken.None);
+
+        // Assert
+        mocks.MockChannel.Verify(m => m.ExchangeDeclare(sut.ExchangeName, ExchangeType.Direct, true, false, null));
+        mocks.MockChannel.Verify(m => m.QueueDeclare(sut.QueueName, true, false, false, expectedHeaders));
+        mocks.MockChannel.Verify(m => m.QueueBind(sut.QueueName, sut.ExchangeName, "DEFAULT", null));
+    }
+
+    [Fact]
+    public async Task StartAsync_WhenCalled_DeclaresRetryQueue()
+    {
+        // Arrange
+        var sut = GetSut<BasicConsumer>(out var mocks);
+        var expectedQueue = sut.QueueName + "_T1_RETRY";
+        var expectedHeaders = new Dictionary<string, object>
+        {
+            ["x-dead-letter-exchange"] = sut.ExchangeName,
+            ["x-dead-letter-routing-key"] = "DEFAULT",
+        };
+
+        // Act
+        await sut.StartAsync(CancellationToken.None);
+
+        // Assert
+        mocks.MockChannel.Verify(m => m.QueueDeclare(expectedQueue, true, false, false, expectedHeaders));
+        mocks.MockChannel.Verify(m => m.QueueBind(expectedQueue, sut.ExchangeName, "T1_RETRY", null));
+    }
+
+    [Fact]
+    public async Task StartAsync_WhenCalled_DeclaresDeadLetterQueue()
+    {
+        // Arrange
+        var sut = GetSut<BasicConsumer>(out var mocks);
+        var expectedQueue = sut.QueueName + "_T2_DLQ";
+
+        // Act
+        await sut.StartAsync(CancellationToken.None);
+
+        // Assert
+        mocks.MockChannel.Verify(m => m.QueueDeclare(expectedQueue, true, false, false, null));
+        mocks.MockChannel.Verify(m => m.QueueBind(expectedQueue, sut.ExchangeName, "T2_DLQ", null));
     }
 
     [Fact]
