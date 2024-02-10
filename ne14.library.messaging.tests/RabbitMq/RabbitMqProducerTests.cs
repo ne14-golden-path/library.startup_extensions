@@ -4,7 +4,6 @@
 
 namespace ne14.library.messaging.tests.RabbitMq;
 
-using System.Text.Json;
 using FluentAssertions;
 using ne14.library.messaging.Abstractions.Producer;
 using ne14.library.messaging.RabbitMq;
