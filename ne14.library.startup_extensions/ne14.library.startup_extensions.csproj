@@ -15,7 +15,7 @@
     <TargetFramework>net6.0</TargetFramework>
     <Title>$(AssemblyName)</Title>
     <PackageTags>Startup; Extensions;</PackageTags>
-    <VersionPrefix>1.0.4</VersionPrefix>
+    <VersionPrefix>1.0.5</VersionPrefix>
   </PropertyGroup>
 
   <ItemGroup>
