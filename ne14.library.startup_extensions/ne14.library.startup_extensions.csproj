@@ -21,7 +21,6 @@
   <ItemGroup>
     <None Include="../README.md" Pack="true" PackagePath="\" Visible="false" />
     <None Include="../LICENSE" Pack="true" PackagePath="\" Visible="false" />
-    <None Include="..\.editorconfig" Link=".editorconfig" />
   </ItemGroup>
 
   <ItemGroup>
@@ -32,8 +31,8 @@
     <PackageReference Include="MethodBoundaryAspect.Fody" Version="2.0.149" />
     <PackageReference Include="Microsoft.Extensions.Configuration.Abstractions" Version="8.0.0" />
     <PackageReference Include="Microsoft.Extensions.DependencyInjection.Abstractions" Version="8.0.0" />
-    <PackageReference Include="ne14.library.fluent_errors" Version="1.0.2" />
-    <PackageReference Include="ne14.library.standards" Version="1.0.4" />
+    <PackageReference Include="ne14.library.fluent_errors" Version="1.0.4" />
+    <PackageReference Include="ne14.library.standards" Version="1.0.6" />
     <PackageReference Include="OpenTelemetry.Exporter.OpenTelemetryProtocol" Version="1.6.0" />
     <PackageReference Include="OpenTelemetry.Extensions.Hosting" Version="1.6.0" />
     <PackageReference Include="OpenTelemetry.Instrumentation.AspNetCore" Version="1.6.0-beta.2" />

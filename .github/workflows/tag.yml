@@ -10,7 +10,7 @@ jobs:
     steps:
     - name: Install xmllint
       run: sudo apt install libxml2-utils
-    - uses: actions/checkout@v3
+    - uses: actions/checkout@v4
       with:
         ssh-key: "${{ secrets.COMMIT_KEY }}"
     - name: Set the version

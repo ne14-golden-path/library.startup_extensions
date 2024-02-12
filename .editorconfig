@@ -1,3 +1,0 @@
-﻿[*.cs]
-
-dotnet_code_quality.CA1062.null_check_validation_methods = ne14.library.fluent_errors.Extensions.AssertionExtensions.MustExist``1(``0,System.String,System.Func{System.Boolean})
