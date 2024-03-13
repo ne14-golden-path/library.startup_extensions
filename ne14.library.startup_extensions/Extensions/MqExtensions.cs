@@ -31,6 +31,7 @@ public static class MqExtensions
             UserName = mqSection["Username"],
             Password = mqSection["Password"],
             HostName = mqSection["Hostname"],
+            Port = mqSection.GetValue<int?>("Port") ?? AmqpTcpEndpoint.UseDefaultPort,
             DispatchConsumersAsync = true,
         };
 
