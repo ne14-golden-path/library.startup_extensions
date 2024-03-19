@@ -48,7 +48,9 @@ public static class MqExtensions
         this IServiceCollection services)
         where T : MqConsumerBase
     {
-        return services.AddHostedService<T>();
+        return services
+            .AddScoped<T>()
+            .AddHostedService<ConsumerHostingService<T>>();
     }
 
     /// <summary>
@@ -61,6 +63,6 @@ public static class MqExtensions
         this IServiceCollection services)
         where T : MqProducerBase
     {
-        return services.AddSingleton<T>();
+        return services.AddScoped<T>();
     }
 }
