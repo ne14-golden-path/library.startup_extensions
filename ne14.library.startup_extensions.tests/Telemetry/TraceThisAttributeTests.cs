@@ -7,8 +7,8 @@ namespace ne14.library.startup_extensions.tests.Telemetry;
 using System.Diagnostics;
 using System.Reflection;
 using System.Text;
+using FluentErrors.Errors;
 using MethodBoundaryAspect.Fody.Attributes;
-using ne14.library.fluent_errors.Errors;
 using ne14.library.startup_extensions.Telemetry;
 
 /// <summary>

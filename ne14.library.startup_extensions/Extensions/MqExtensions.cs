@@ -61,7 +61,7 @@ public static class MqExtensions
     /// <returns>The original parameter, for chainable commands.</returns>
     public static IServiceCollection AddMqProducer<T>(
         this IServiceCollection services)
-        where T : MqProducerBase
+        where T : class, IMqProducer
     {
         return services.AddScoped<T>();
     }

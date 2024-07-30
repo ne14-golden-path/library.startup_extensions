@@ -8,8 +8,8 @@ using System;
 using System.Diagnostics;
 using System.Reflection;
 using System.Threading.Tasks;
+using FluentErrors.Extensions;
 using MethodBoundaryAspect.Fody.Attributes;
-using ne14.library.fluent_errors.Extensions;
 
 /// <summary>
 /// Attribute that automatically captures basic trace data.
@@ -18,7 +18,7 @@ using ne14.library.fluent_errors.Extensions;
 /// Initializes a new instance of the <see cref="TraceThisAttribute"/> class.
 /// </remarks>
 [AttributeUsage(AttributeTargets.All)]
-public sealed class TraceThisAttribute() : OnMethodBoundaryAspect, IDisposable
+public sealed class TraceThisAttribute : OnMethodBoundaryAspect, IDisposable
 {
     /// <summary>
     /// Gets a value indicating whether the object has been disposed.
@@ -42,7 +42,7 @@ public sealed class TraceThisAttribute() : OnMethodBoundaryAspect, IDisposable
         var activityName = GetActivityName(method);
         this.Activity = this.Telemeter.StartTrace(activityName);
         this.IsDisposed = false;
-        Trace.WriteLine($"Activity on {this.Telemeter.AppTracer.Name}; {activityName}");
+        Trace.TraceInformation($"Activity on {this.Telemeter.AppTracer.Name}; {activityName}");
     }
 
     /// <inheritdoc/>

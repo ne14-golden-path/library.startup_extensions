@@ -7,6 +7,7 @@ Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "ne14.library.startup_extens
 EndProject
 Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Files", "Files", "{29D77929-58F5-48A9-A36E-25DD71A6E561}"
 	ProjectSection(SolutionItems) = preProject
+		.editorconfig = .editorconfig
 		README.md = README.md
 		stryker-config.json = stryker-config.json
 	EndProjectSection
@@ -22,7 +23,7 @@ Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "ne14.library.startup_extens
 EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "ne14.library.messaging", "ne14.library.messaging\ne14.library.messaging.csproj", "{F538D3F5-9635-4012-A47E-4FE6067F907D}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "ne14.library.messaging.tests", "ne14.library.messaging.tests\ne14.library.messaging.tests.csproj", "{F0165B8F-3B76-47F7-A0FF-C4FAC6F9FE96}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "ne14.library.messaging.tests", "ne14.library.messaging.tests\ne14.library.messaging.tests.csproj", "{F0165B8F-3B76-47F7-A0FF-C4FAC6F9FE96}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution

@@ -82,7 +82,7 @@ public class MqTracingProducerTests
         => JsonSerializer.Serialize(obj, JsonOpts);
 
     private static T GetSut<T>(out BagOfMocks<T> mocks)
-        where T : MqProducerBase
+        where T : IMqProducer
     {
         mocks = new(
             new Mock<IModel>(),

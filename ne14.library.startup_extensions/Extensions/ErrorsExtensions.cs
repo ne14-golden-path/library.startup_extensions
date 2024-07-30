@@ -5,12 +5,12 @@
 namespace ne14.library.startup_extensions.Extensions;
 
 using System.Linq;
+using FluentErrors.Errors;
+using FluentErrors.Validation;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.ModelBinding;
 using Microsoft.Extensions.DependencyInjection;
-using ne14.library.fluent_errors.Errors;
-using ne14.library.fluent_errors.Validation;
 using ne14.library.startup_extensions.Errors;
 
 /// <summary>

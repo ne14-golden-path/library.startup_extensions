@@ -5,9 +5,9 @@
 namespace ne14.library.startup_extensions.tests.Mq;
 
 using System.Diagnostics;
+using FluentErrors.Errors;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.Logging;
-using ne14.library.fluent_errors.Errors;
 using ne14.library.messaging.Abstractions.Consumer;
 using ne14.library.startup_extensions.Mq;
 using ne14.library.startup_extensions.Telemetry;

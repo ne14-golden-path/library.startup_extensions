@@ -80,7 +80,7 @@ public abstract class MqConsumerBase : IMqConsumer
     protected internal abstract Task StopInternal(CancellationToken token);
 
     private static string ToKebabCase(string str)
-        => KebabCaseRegex.Replace(str, "-$1").Trim().ToLower();
+        => KebabCaseRegex.Replace(str, "-$1").Trim().ToLowerInvariant();
 }
 
 /// <inheritdoc cref="IMqConsumer{T}"/>
@@ -119,10 +119,9 @@ public abstract class MqConsumerBase<T> : MqConsumerBase, IMqConsumer<T>
     {
         args = args ?? throw new ArgumentNullException(nameof(args));
         this.MessageReceived?.Invoke(this, args);
-        T? message = default;
         try
         {
-            message = this.Parse(rawMessage);
+            var message = this.Parse(rawMessage);
             await this.ConsumeAsync(message, args);
             this.MessageProcessed?.Invoke(this, args);
         }

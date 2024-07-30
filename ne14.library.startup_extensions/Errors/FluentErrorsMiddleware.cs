@@ -6,10 +6,10 @@ namespace ne14.library.startup_extensions.Errors;
 
 using System;
 using System.Threading.Tasks;
+using FluentErrors.Api;
+using FluentErrors.Extensions;
 using Microsoft.AspNetCore.Http;
 using Microsoft.Extensions.Logging;
-using ne14.library.fluent_errors.Api;
-using ne14.library.fluent_errors.Extensions;
 
 /// <summary>
 /// Middleware for fluent errors.

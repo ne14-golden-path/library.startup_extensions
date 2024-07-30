@@ -4,9 +4,9 @@
 
 namespace ne14.library.startup_extensions.tests.Errors;
 
+using FluentErrors.Errors;
 using Microsoft.AspNetCore.Http;
 using Microsoft.Extensions.Logging;
-using ne14.library.fluent_errors.Errors;
 using ne14.library.startup_extensions.Errors;
 
 /// <summary>

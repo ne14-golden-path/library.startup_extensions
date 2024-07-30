@@ -10,17 +10,8 @@ using System.Text.Json;
 using System.Text.Json.Serialization;
 using ne14.library.messaging.Abstractions.Consumer;
 
-/// <summary>
-/// Base implementation for producing mq messages.
-/// </summary>
-public abstract class MqProducerBase : IMqProducer
-{
-    /// <inheritdoc/>
-    public abstract string ExchangeName { get; }
-}
-
 /// <inheritdoc cref="IMqProducer{T}"/>
-public abstract class MqProducerBase<T> : MqProducerBase, IMqProducer<T>
+public abstract class MqProducerBase<T> : IMqProducer<T>
 {
     private readonly JsonSerializerOptions jsonOpts = new()
     {
@@ -38,6 +29,11 @@ public abstract class MqProducerBase<T> : MqProducerBase, IMqProducer<T>
     /// Fires when a message has been sent.
     /// </summary>
     public event EventHandler<MqEventArgs>? MessageSent;
+
+    /// <summary>
+    /// Gets the exchange name.
+    /// </summary>
+    public abstract string ExchangeName { get; }
 
     /// <inheritdoc/>
     public void Produce(T message)

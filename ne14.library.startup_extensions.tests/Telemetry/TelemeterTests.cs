@@ -7,7 +7,7 @@ namespace ne14.library.startup_extensions.tests.Telemetry;
 using System.Diagnostics;
 using System.Diagnostics.Metrics;
 using System.Reflection;
-using ne14.library.fluent_errors.Extensions;
+using FluentErrors.Extensions;
 using ne14.library.startup_extensions.Telemetry;
 
 /// <summary>

@@ -1,0 +1,4 @@
+﻿[*.cs]
+
+# Constitutes a null check (CA1062)
+dotnet_code_quality.null_check_validation_methods = MustExist

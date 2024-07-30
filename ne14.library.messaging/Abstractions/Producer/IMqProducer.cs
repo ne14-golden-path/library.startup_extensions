@@ -19,7 +19,7 @@ public interface IMqProducer
 /// Produces mq messages of type <typeparamref name="T"/>.
 /// </summary>
 /// <typeparam name="T">The message type.</typeparam>
-public interface IMqProducer<in T>
+public interface IMqProducer<in T> : IMqProducer
 {
     /// <summary>
     /// Produces a message.

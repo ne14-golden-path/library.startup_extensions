@@ -5,9 +5,9 @@
 namespace ne14.library.startup_extensions.Mq;
 
 using System.Collections.Generic;
+using FluentErrors.Extensions;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.Logging;
-using ne14.library.fluent_errors.Extensions;
 using ne14.library.messaging.Abstractions.Consumer;
 using ne14.library.messaging.RabbitMq;
 using ne14.library.startup_extensions.Telemetry;

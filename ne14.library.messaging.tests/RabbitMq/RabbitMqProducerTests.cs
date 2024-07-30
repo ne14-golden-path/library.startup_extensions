@@ -122,7 +122,7 @@ public class RabbitMqProducerTests
 
     private static T GetSut<T>(
         out BagOfMocks mocks)
-        where T : MqProducerBase
+        where T : IMqProducer
     {
         mocks = new(
             new Mock<IModel>(),
