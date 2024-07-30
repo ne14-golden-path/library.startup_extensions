@@ -15,7 +15,7 @@
     <TargetFramework>net6.0</TargetFramework>
     <Title>$(AssemblyName)</Title>
     <PackageTags>Messaging; MQ;</PackageTags>
-    <VersionPrefix>1.0.8</VersionPrefix>
+    <VersionPrefix>1.0.9</VersionPrefix>
   </PropertyGroup>
 
   <ItemGroup>
