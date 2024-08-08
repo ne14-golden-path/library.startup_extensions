@@ -4,16 +4,15 @@
 # Restore tools
 dotnet tool restore
 
-# Run unit tests (multiple test projects, no threshold)
-gci **/TestResults/ | ri -r; dotnet test -c Release -s .runsettings; dotnet reportgenerator -targetdir:coveragereport -reports:**/coverage.cobertura.xml -reporttypes:"html;jsonsummary"; start coveragereport/index.html;
+# General clean up
+rd -r **/bin/; rd -r **/obj/;
 
-# Run mutation tests and show report
-gci **/StrykerOutput/ | ri -r; dotnet stryker -o;
-```
+# Run unit tests
+rd -r ../**/TestResults/; dotnet test -c Release -s .runsettings; dotnet reportgenerator -targetdir:coveragereport -reports:**/coverage.cobertura.xml -reporttypes:"html;jsonsummary"; start coveragereport/index.html;
 
-### Packaging locally
+# Run mutation tests
+rd -r ../**/StrykerOutput/; dotnet stryker -o;
 
-``` powershell
-# Upload to local package repo
-$ver="1.0.0-alpha-0001"; dotnet pack -c Release -o nu -p:Version=$ver; dotnet nuget push "nu\*library*.$ver.nupkg" --source localdev
+# Pack and publish a pre-release to a local feed
+$suffix="alpha001"; dotnet pack -c Release -o nu --version-suffix $suffix; dotnet nuget push "nu\*.*$suffix.nupkg" --source localdev; gci nu/ | ri -r; rmdir nu;
 ```
